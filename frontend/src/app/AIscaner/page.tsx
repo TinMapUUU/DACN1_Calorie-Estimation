@@ -133,7 +133,7 @@ export default function AiScannerPage() {
                   <p className="text-[#191c1c] font-semibold text-lg">Scan another meal</p>
                   <p className="text-gray-500 text-sm mt-1">Click here to select a new photo</p>
                 </div>
-                <input type="file" ref={fileInputRef} onChange={handleImageUpload} accept="image/*" className="hidden" />
+                <input type="file" ref={fileInputRef} onChange={handleImageUpload} accept="image/*" className="hidden" aria-label="Upload meal photo" />
               </div>
             </div>
 
