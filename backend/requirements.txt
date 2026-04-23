@@ -1,0 +1,10 @@
+fastapi
+uvicorn
+python-multipart
+torch
+torchvision
+sqlalchemy
+psycopg2-binary
+passlib[bcrypt]
+sqlmodel
+python-jose[cryptography]
