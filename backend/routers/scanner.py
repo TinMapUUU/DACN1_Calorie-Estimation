@@ -1,9 +1,11 @@
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Form
 from sqlmodel import Session
+from pydantic import BaseModel
 from datetime import datetime
 import io
+import os
+import logging
 
-# Thư viện cho AI
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -15,8 +17,14 @@ from models.db_models import User, MealLog, MealType
 from security import get_current_user
 
 router = APIRouter()
+logger = logging.getLogger(__name__)
 
-# ===================== CẤU HÌNH AI =====================
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+)
+
+# ===================== CLASS NAMES =====================
 CLASS_NAMES = [
     "Banh beo", "Banh bot loc", "Banh can", "Banh canh", "Banh chung",
     "Banh cuon", "Banh duc", "Banh gio", "Banh khot", "Banh mi",
@@ -31,108 +39,464 @@ CLASS_NAMES = [
     "Tom chien", "Tom luoc", "Tom nuong", "Xoi xeo"
 ]
 
-NUTRITION_DB = {
-    "Pho": {"calories": 400, "macros": {"protein": "20g", "carbs": "60g", "fat": "10g"}},
-    "Banh xeo": {"calories": 350, "macros": {"protein": "15g", "carbs": "35g", "fat": "18g"}},
-    "Banh mi": {"calories": 450, "macros": {"protein": "25g", "carbs": "50g", "fat": "15g"}},
-    "Com tam": {"calories": 700, "macros": {"protein": "35g", "carbs": "80g", "fat": "25g"}},
-    "Bun bo Hue": {"calories": 500, "macros": {"protein": "28g", "carbs": "65g", "fat": "15g"}},
+# ===================== VIETNAMESE FOOD DB =====================
+# calories/macros tính trên 100g, common_units là gram thực tế của khẩu phần
+VIETNAMESE_FOOD_DB = {
+    "Banh beo": {
+        "calo_per_100g": 140, "protein_per_100g": 4.0, "carbs_per_100g": 17.5, "fat_per_100g": 6.0,
+        "default_unit": "1 đĩa (5-6 cái)",
+        "common_units": {"1 đĩa nhỏ (4 cái)": 150, "1 đĩa (5-6 cái)": 200, "1 đĩa lớn (8 cái)": 280}
+    },
+    "Banh bot loc": {
+        "calo_per_100g": 110, "protein_per_100g": 2.8, "carbs_per_100g": 16.5, "fat_per_100g": 3.3,
+        "default_unit": "1 phần (6-8 cái)",
+        "common_units": {"1 phần nhỏ (4 cái)": 140, "1 phần (6-8 cái)": 180, "1 phần lớn (10 cái)": 240}
+    },
+    "Banh can": {
+        "calo_per_100g": 115, "protein_per_100g": 3.1, "carbs_per_100g": 15.4, "fat_per_100g": 3.8,
+        "default_unit": "1 phần (8 cái)",
+        "common_units": {"1 phần nhỏ (6 cái)": 100, "1 phần (8 cái)": 130, "1 phần lớn (10 cái)": 160}
+    },
+    "Banh canh": {
+        "calo_per_100g": 95, "protein_per_100g": 3.3, "carbs_per_100g": 12.2, "fat_per_100g": 3.3,
+        "default_unit": "1 tô tiêu chuẩn",
+        "common_units": {"1 tô nhỏ": 300, "1 tô tiêu chuẩn": 370, "1 tô lớn": 480}
+    },
+    "Banh chung": {
+        "calo_per_100g": 175, "protein_per_100g": 5.5, "carbs_per_100g": 20.8, "fat_per_100g": 7.7,
+        "default_unit": "1 miếng vừa",
+        "common_units": {"1/4 bánh": 130, "1 miếng vừa": 183, "1/2 bánh": 260}
+    },
+    "Banh cuon": {
+        "calo_per_100g": 110, "protein_per_100g": 4.9, "carbs_per_100g": 13.4, "fat_per_100g": 3.7,
+        "default_unit": "1 phần (3 cuốn)",
+        "common_units": {"1 phần nhỏ (2 cuốn)": 110, "1 phần (3 cuốn)": 165, "1 phần lớn (4 cuốn)": 220}
+    },
+    "Banh duc": {
+        "calo_per_100g": 118, "protein_per_100g": 3.2, "carbs_per_100g": 17.2, "fat_per_100g": 3.8,
+        "default_unit": "1 phần vừa",
+        "common_units": {"1 phần nhỏ": 150, "1 phần vừa": 185, "1 phần lớn": 240}
+    },
+    "Banh gio": {
+        "calo_per_100g": 150, "protein_per_100g": 6.3, "carbs_per_100g": 17.5, "fat_per_100g": 6.3,
+        "default_unit": "1 cái bình thường",
+        "common_units": {"1 cái nhỏ": 120, "1 cái bình thường": 160, "1 cái lớn": 210}
+    },
+    "Banh khot": {
+        "calo_per_100g": 145, "protein_per_100g": 4.7, "carbs_per_100g": 16.6, "fat_per_100g": 6.2,
+        "default_unit": "1 đĩa (6-8 cái)",
+        "common_units": {"1 đĩa nhỏ (5 cái)": 150, "1 đĩa (6-8 cái)": 195, "1 đĩa lớn (10 cái)": 255}
+    },
+    "Banh mi": {
+        "calo_per_100g": 255, "protein_per_100g": 14.2, "carbs_per_100g": 28.5, "fat_per_100g": 8.5,
+        "default_unit": "1 ổ bình thường",
+        "common_units": {"1/2 ổ": 88, "1 ổ bình thường": 175, "1 ổ lớn": 230}
+    },
+    "Banh pia": {
+        "calo_per_100g": 390, "protein_per_100g": 10.3, "carbs_per_100g": 49.2, "fat_per_100g": 16.4,
+        "default_unit": "1 cái",
+        "common_units": {"1/2 cái": 49, "1 cái": 97, "2 cái": 194}
+    },
+    "Banh tet": {
+        "calo_per_100g": 165, "protein_per_100g": 6.0, "carbs_per_100g": 19.7, "fat_per_100g": 6.6,
+        "default_unit": "1 khoanh vừa",
+        "common_units": {"1 khoanh mỏng": 130, "1 khoanh vừa": 180, "2 khoanh": 360}
+    },
+    "Banh trang nuong": {
+        "calo_per_100g": 110, "protein_per_100g": 2.7, "carbs_per_100g": 16.5, "fat_per_100g": 2.7,
+        "default_unit": "1 cái bình thường",
+        "common_units": {"1 cái nhỏ": 75, "1 cái bình thường": 110, "1 cái lớn": 150}
+    },
+    "Banh xeo": {
+        "calo_per_100g": 155, "protein_per_100g": 6.7, "carbs_per_100g": 15.6, "fat_per_100g": 8.0,
+        "default_unit": "1 cái bình thường",
+        "common_units": {"1/2 cái": 115, "1 cái bình thường": 225, "1 cái lớn": 300}
+    },
+    "Bo kho": {
+        "calo_per_100g": 120, "protein_per_100g": 8.0, "carbs_per_100g": 7.1, "fat_per_100g": 6.3,
+        "default_unit": "1 tô bình thường",
+        "common_units": {"1 tô nhỏ": 280, "1 tô bình thường": 350, "1 tô lớn": 450}
+    },
+    "Bun bo Hue": {
+        "calo_per_100g": 100, "protein_per_100g": 5.6, "carbs_per_100g": 13.0, "fat_per_100g": 3.0,
+        "default_unit": "1 tô tiêu chuẩn",
+        "common_units": {"1 tô nhỏ": 400, "1 tô tiêu chuẩn": 500, "1 tô đặc biệt": 650}
+    },
+    "Bun dau mam tom": {
+        "calo_per_100g": 130, "protein_per_100g": 6.2, "carbs_per_100g": 15.4, "fat_per_100g": 4.1,
+        "default_unit": "1 phần bình thường",
+        "common_units": {"1 phần nhỏ": 240, "1 phần bình thường": 290, "1 phần lớn": 380}
+    },
+    "Bun mam": {
+        "calo_per_100g": 88, "protein_per_100g": 3.3, "carbs_per_100g": 11.6, "fat_per_100g": 2.8,
+        "default_unit": "1 tô tiêu chuẩn",
+        "common_units": {"1 tô nhỏ": 300, "1 tô tiêu chuẩn": 365, "1 tô lớn": 480}
+    },
+    "Bun rieu": {
+        "calo_per_100g": 95, "protein_per_100g": 3.8, "carbs_per_100g": 12.5, "fat_per_100g": 3.0,
+        "default_unit": "1 tô tiêu chuẩn",
+        "common_units": {"1 tô nhỏ": 320, "1 tô tiêu chuẩn": 400, "1 tô lớn": 530}
+    },
+    "Bun thit nuong": {
+        "calo_per_100g": 115, "protein_per_100g": 6.6, "carbs_per_100g": 14.2, "fat_per_100g": 3.8,
+        "default_unit": "1 tô bình thường",
+        "common_units": {"1 tô nhỏ": 300, "1 tô bình thường": 365, "1 tô lớn": 480}
+    },
+    "Ca chien": {
+        "calo_per_100g": 190, "protein_per_100g": 14.0, "carbs_per_100g": 9.0, "fat_per_100g": 10.0,
+        "default_unit": "1 con vừa",
+        "common_units": {"1 miếng nhỏ": 120, "1 con vừa": 200, "1 con lớn": 300}
+    },
+    "Ca hap": {
+        "calo_per_100g": 130, "protein_per_100g": 14.9, "carbs_per_100g": 3.7, "fat_per_100g": 6.5,
+        "default_unit": "1 con vừa",
+        "common_units": {"1 miếng": 150, "1 con vừa": 215, "1 con lớn": 330}
+    },
+    "Ca kho": {
+        "calo_per_100g": 160, "protein_per_100g": 15.0, "carbs_per_100g": 6.0, "fat_per_100g": 8.0,
+        "default_unit": "1 con vừa",
+        "common_units": {"1 miếng": 130, "1 con vừa": 200, "1 con lớn": 280}
+    },
+    "Canh bi do": {
+        "calo_per_100g": 48, "protein_per_100g": 2.4, "carbs_per_100g": 6.0, "fat_per_100g": 1.6,
+        "default_unit": "1 tô bình thường",
+        "common_units": {"1 chén": 150, "1 tô bình thường": 250, "1 tô lớn": 380}
+    },
+    "Canh chua": {
+        "calo_per_100g": 55, "protein_per_100g": 4.3, "carbs_per_100g": 3.7, "fat_per_100g": 2.5,
+        "default_unit": "1 tô bình thường",
+        "common_units": {"1 chén": 160, "1 tô bình thường": 330, "1 tô lớn": 450}
+    },
+    "Canh cua": {
+        "calo_per_100g": 50, "protein_per_100g": 5.7, "carbs_per_100g": 2.9, "fat_per_100g": 1.8,
+        "default_unit": "1 tô bình thường",
+        "common_units": {"1 chén": 150, "1 tô bình thường": 280, "1 tô lớn": 400}
+    },
+    "Canh ham": {
+        "calo_per_100g": 58, "protein_per_100g": 4.3, "carbs_per_100g": 3.6, "fat_per_100g": 2.9,
+        "default_unit": "1 tô bình thường",
+        "common_units": {"1 chén": 140, "1 tô bình thường": 280, "1 tô lớn": 400}
+    },
+    "Canh kho qua": {
+        "calo_per_100g": 42, "protein_per_100g": 1.9, "carbs_per_100g": 5.3, "fat_per_100g": 1.5,
+        "default_unit": "1 tô bình thường",
+        "common_units": {"1 chén": 160, "1 tô bình thường": 260, "1 tô lớn": 380}
+    },
+    "Cao lau": {
+        "calo_per_100g": 118, "protein_per_100g": 4.5, "carbs_per_100g": 14.6, "fat_per_100g": 4.5,
+        "default_unit": "1 tô tiêu chuẩn",
+        "common_units": {"1 tô nhỏ": 280, "1 tô tiêu chuẩn": 355, "1 tô lớn": 460}
+    },
+    "Chao long": {
+        "calo_per_100g": 105, "protein_per_100g": 5.5, "carbs_per_100g": 8.8, "fat_per_100g": 5.0,
+        "default_unit": "1 tô tiêu chuẩn",
+        "common_units": {"1 tô nhỏ": 300, "1 tô tiêu chuẩn": 360, "1 tô lớn": 480}
+    },
+    "Com tam": {
+        "calo_per_100g": 175, "protein_per_100g": 8.75, "carbs_per_100g": 20.0, "fat_per_100g": 6.25,
+        "default_unit": "1 dĩa bình thường",
+        "common_units": {"1 dĩa nhỏ": 300, "1 dĩa bình thường": 400, "1 dĩa lớn": 550}
+    },
+    "Ech nuong": {
+        "calo_per_100g": 145, "protein_per_100g": 16.5, "carbs_per_100g": 4.1, "fat_per_100g": 7.2,
+        "default_unit": "1 phần bình thường",
+        "common_units": {"1 phần nhỏ": 150, "1 phần bình thường": 195, "1 phần lớn": 260}
+    },
+    "Ech xao": {
+        "calo_per_100g": 160, "protein_per_100g": 17.5, "carbs_per_100g": 5.0, "fat_per_100g": 8.0,
+        "default_unit": "1 phần bình thường",
+        "common_units": {"1 phần nhỏ": 150, "1 phần bình thường": 200, "1 phần lớn": 270}
+    },
+    "Goi cuon": {
+        "calo_per_100g": 105, "protein_per_100g": 4.8, "carbs_per_100g": 13.3, "fat_per_100g": 3.8,
+        "default_unit": "2 cuốn",
+        "common_units": {"1 cuốn": 105, "2 cuốn": 210, "3 cuốn": 315}
+    },
+    "Hu tieu": {
+        "calo_per_100g": 95, "protein_per_100g": 3.8, "carbs_per_100g": 13.0, "fat_per_100g": 2.7,
+        "default_unit": "1 tô tiêu chuẩn",
+        "common_units": {"1 tô nhỏ": 300, "1 tô tiêu chuẩn": 370, "1 tô lớn": 480}
+    },
+    "Luon xao": {
+        "calo_per_100g": 158, "protein_per_100g": 14.7, "carbs_per_100g": 6.3, "fat_per_100g": 8.4,
+        "default_unit": "1 phần bình thường",
+        "common_units": {"1 phần nhỏ": 140, "1 phần bình thường": 190, "1 phần lớn": 260}
+    },
+    "Mi quang": {
+        "calo_per_100g": 110, "protein_per_100g": 4.7, "carbs_per_100g": 13.7, "fat_per_100g": 3.7,
+        "default_unit": "1 tô tiêu chuẩn",
+        "common_units": {"1 tô nhỏ": 300, "1 tô tiêu chuẩn": 380, "1 tô lớn": 500}
+    },
+    "Muc chien": {
+        "calo_per_100g": 185, "protein_per_100g": 14.1, "carbs_per_100g": 9.8, "fat_per_100g": 9.8,
+        "default_unit": "1 phần bình thường",
+        "common_units": {"1 phần nhỏ": 130, "1 phần bình thường": 185, "1 phần lớn": 250}
+    },
+    "Muc hap": {
+        "calo_per_100g": 142, "protein_per_100g": 14.2, "carbs_per_100g": 6.1, "fat_per_100g": 6.1,
+        "default_unit": "1 phần bình thường",
+        "common_units": {"1 phần nhỏ": 140, "1 phần bình thường": 197, "1 phần lớn": 270}
+    },
+    "Muc nuong": {
+        "calo_per_100g": 160, "protein_per_100g": 15.0, "carbs_per_100g": 5.0, "fat_per_100g": 8.0,
+        "default_unit": "1 phần bình thường",
+        "common_units": {"1 phần nhỏ": 140, "1 phần bình thường": 200, "1 phần lớn": 270}
+    },
+    "Muc xao": {
+        "calo_per_100g": 150, "protein_per_100g": 13.0, "carbs_per_100g": 7.0, "fat_per_100g": 7.0,
+        "default_unit": "1 phần bình thường",
+        "common_units": {"1 phần nhỏ": 140, "1 phần bình thường": 200, "1 phần lớn": 260}
+    },
+    "Nem chua": {
+        "calo_per_100g": 200, "protein_per_100g": 12.9, "carbs_per_100g": 11.4, "fat_per_100g": 11.4,
+        "default_unit": "3 cái",
+        "common_units": {"2 cái": 100, "3 cái": 140, "5 cái": 235}
+    },
+    "Pho": {
+        "calo_per_100g": 80, "protein_per_100g": 4.0, "carbs_per_100g": 12.0, "fat_per_100g": 2.0,
+        "default_unit": "1 tô tiêu chuẩn",
+        "common_units": {"1 tô nhỏ": 400, "1 tô tiêu chuẩn": 500, "1 tô đặc biệt": 650}
+    },
+    "Rau cu luoc": {
+        "calo_per_100g": 55, "protein_per_100g": 3.1, "carbs_per_100g": 7.0, "fat_per_100g": 1.6,
+        "default_unit": "1 đĩa bình thường",
+        "common_units": {"1 đĩa nhỏ": 180, "1 đĩa bình thường": 255, "1 đĩa lớn": 360}
+    },
+    "Rau cu xao": {
+        "calo_per_100g": 75, "protein_per_100g": 4.2, "carbs_per_100g": 8.3, "fat_per_100g": 3.3,
+        "default_unit": "1 đĩa bình thường",
+        "common_units": {"1 đĩa nhỏ": 170, "1 đĩa bình thường": 240, "1 đĩa lớn": 330}
+    },
+    "Suon xao": {
+        "calo_per_100g": 195, "protein_per_100g": 14.9, "carbs_per_100g": 7.4, "fat_per_100g": 11.2,
+        "default_unit": "1 phần bình thường",
+        "common_units": {"1 phần nhỏ": 160, "1 phần bình thường": 215, "1 phần lớn": 300}
+    },
+    "Thit chien": {
+        "calo_per_100g": 210, "protein_per_100g": 16.6, "carbs_per_100g": 6.6, "fat_per_100g": 12.2,
+        "default_unit": "1 phần bình thường",
+        "common_units": {"1 phần nhỏ": 130, "1 phần bình thường": 180, "1 phần lớn": 250}
+    },
+    "Thit kho": {
+        "calo_per_100g": 200, "protein_per_100g": 14.0, "carbs_per_100g": 9.0, "fat_per_100g": 12.0,
+        "default_unit": "1 phần bình thường",
+        "common_units": {"1 phần nhỏ": 140, "1 phần bình thường": 200, "1 phần lớn": 280}
+    },
+    "Thit roti": {
+        "calo_per_100g": 210, "protein_per_100g": 16.0, "carbs_per_100g": 10.0, "fat_per_100g": 11.0,
+        "default_unit": "1 phần bình thường",
+        "common_units": {"1 phần nhỏ": 140, "1 phần bình thường": 200, "1 phần lớn": 270}
+    },
+    "Thit xa xiu": {
+        "calo_per_100g": 215, "protein_per_100g": 16.6, "carbs_per_100g": 10.7, "fat_per_100g": 11.7,
+        "default_unit": "1 phần bình thường",
+        "common_units": {"1 phần nhỏ": 140, "1 phần bình thường": 205, "1 phần lớn": 280}
+    },
+    "Tom chien": {
+        "calo_per_100g": 175, "protein_per_100g": 15.3, "carbs_per_100g": 6.5, "fat_per_100g": 8.7,
+        "default_unit": "1 phần bình thường",
+        "common_units": {"1 phần nhỏ": 130, "1 phần bình thường": 182, "1 phần lớn": 250}
+    },
+    "Tom luoc": {
+        "calo_per_100g": 130, "protein_per_100g": 15.0, "carbs_per_100g": 4.0, "fat_per_100g": 5.0,
+        "default_unit": "1 phần bình thường",
+        "common_units": {"1 phần nhỏ": 130, "1 phần bình thường": 200, "1 phần lớn": 280}
+    },
+    "Tom nuong": {
+        "calo_per_100g": 148, "protein_per_100g": 15.8, "carbs_per_100g": 4.9, "fat_per_100g": 6.9,
+        "default_unit": "1 phần bình thường",
+        "common_units": {"1 phần nhỏ": 140, "1 phần bình thường": 203, "1 phần lớn": 270}
+    },
+    "Xoi xeo": {
+        "calo_per_100g": 145, "protein_per_100g": 3.3, "carbs_per_100g": 21.5, "fat_per_100g": 4.1,
+        "default_unit": "1 gói/chén bình thường",
+        "common_units": {"1 chén nhỏ": 180, "1 gói/chén bình thường": 240, "1 gói lớn": 350}
+    },
 }
 
-def load_model():
-    model = models.resnet18(weights=None)
-    model.fc = nn.Linear(model.fc.in_features, len(CLASS_NAMES))
-    # Load weights từ file pth của bạn
-    model.load_state_dict(torch.load("models/food_calorie_model.pth", map_location=torch.device("cpu")))
-    model.eval()
-    return model
+def _get_food_data(food_name: str) -> dict:
+    """Lấy data từ DB, fallback nếu chưa có."""
+    return VIETNAMESE_FOOD_DB.get(food_name, {
+        "calo_per_100g": 130,
+        "protein_per_100g": 7.0,
+        "carbs_per_100g": 18.0,
+        "fat_per_100g": 4.0,
+        "default_unit": "1 khẩu phần tiêu chuẩn",
+        "common_units": {
+            "1 khẩu phần nhỏ": 200,
+            "1 khẩu phần tiêu chuẩn": 300,
+            "1 khẩu phần lớn": 420,
+        }
+    })
 
-# Khởi tạo model AI
-model = load_model()
+def calculate_nutrition(food_name: str, gram: float) -> dict:
+    """Tính nutrition theo gram thực tế."""
+    data = _get_food_data(food_name)
+    factor = gram / 100.0
+    return {
+        "gram": gram,
+        "calories": round(data["calo_per_100g"] * factor, 1),
+        "protein_g": round(data["protein_per_100g"] * factor, 1),
+        "carbs_g": round(data["carbs_per_100g"] * factor, 1),
+        "fat_g": round(data["fat_per_100g"] * factor, 1),
+    }
+
+# ===================== LOAD MODEL =====================
+def get_model_path():
+    current_dir = os.path.dirname(os.path.abspath(__file__))
+    backend_dir = os.path.dirname(current_dir)
+    return os.path.join(backend_dir, "models", "food_calorie_model_v3.pth")
+
+def load_model():
+    model_path = get_model_path()
+    logger.info(f"🔍 Loading model từ: {model_path}")
+    if not os.path.exists(model_path):
+        raise FileNotFoundError(f"Model file not found: {model_path}")
+    m = models.resnet18(weights=None)
+    m.fc = nn.Sequential(
+        nn.Dropout(p=0.4),
+        nn.Linear(m.fc.in_features, len(CLASS_NAMES))
+    )
+    state_dict = torch.load(model_path, map_location=torch.device("cpu"))
+    m.load_state_dict(state_dict)
+    m.eval()
+    logger.info(f"✅ Model v3 loaded! Số lớp: {len(CLASS_NAMES)}")
+    return m
+
+model = None
+try:
+    model = load_model()
+except Exception as e:
+    logger.error(f"❌ Khởi tạo model thất bại: {str(e)}")
 
 transform = transforms.Compose([
-    transforms.Resize((224, 224)),
+    transforms.Resize(256),
+    transforms.CenterCrop(224),
     transforms.ToTensor(),
     transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
 ])
 
 def predict_image(image: Image.Image):
+    if model is None:
+        raise RuntimeError("Model chưa được tải.")
     input_tensor = transform(image).unsqueeze(0)
     with torch.no_grad():
         outputs = model(input_tensor)
         probs = F.softmax(outputs, dim=1)[0]
+        top3_probs, top3_indices = torch.topk(probs, 3)
         confidence, idx = torch.max(probs, 0)
-
     food_name = CLASS_NAMES[idx.item()]
-    confidence = float(confidence.item())
+    top3 = [
+        {"rank": i + 1, "food": CLASS_NAMES[top3_indices[i].item()], "probability": float(top3_probs[i].item())}
+        for i in range(3)
+    ]
+    return food_name, float(confidence.item()), top3
 
-    # Lấy thông tin calo từ DB, nếu món chưa có trong NUTRITION_DB thì dùng logic tính ước lượng của bạn
-    food_info = NUTRITION_DB.get(food_name, {
-        "calories": len(food_name) * 45 + 100,
-        "macros": {
-            "protein": f"{len(food_name)*2}g",
-            "carbs": "45g",
-            "fat": "12g"
-        }
-    })
-    return food_name, confidence, food_info
 
-# Hàm phụ trợ để bóc tách số từ chuỗi (VD: "15g" -> 15.0)
-def extract_macro_value(macro_str: str) -> float:
-    try:
-        return float(macro_str.lower().replace('g', '').strip())
-    except:
-        return 0.0
+# ===================== SCHEMA CONFIRM =====================
+class ConfirmRequest(BaseModel):
+    food_name: str
+    portion_unit: str | None = None  # Tên đơn vị (VD: "1 dĩa bình thường")
+    custom_gram: float | None = None  # Gram tự nhập (ưu tiên hơn portion_unit)
+    meal_type: MealType = MealType.snack
 
-# ===================== API NHẬN DIỆN CHÍNH =====================
+
+# ===================== API 1: ANALYZE (không lưu DB) =====================
 @router.post("/vision/analyze")
 async def analyze_food_image(
     file: UploadFile = File(...),
-    meal_type: MealType = Form(MealType.snack), # Mặc định là bữa phụ
-    session: Session = Depends(get_session),
     current_user: User = Depends(get_current_user)
 ):
-    # 1. Kiểm tra file ảnh
+    """
+    Bước 1: Nhận diện món ăn từ ảnh.
+    KHÔNG lưu DB — chỉ trả về kết quả + danh sách khẩu phần để user chọn.
+    """
     if not file.content_type.startswith("image/"):
         raise HTTPException(status_code=400, detail="File không hợp lệ. Vui lòng upload ảnh!")
 
-    try:
-        # 2. Đọc file ảnh và đưa qua Model AI nhận diện (SỬ DỤNG DỮ LIỆU THẬT)
-        image_bytes = await file.read()
-        image = Image.open(io.BytesIO(image_bytes)).convert("RGB")
-        
-        # Gọi hàm AI
-        food_name, confidence, food_info = predict_image(image)
+    if model is None:
+        raise HTTPException(status_code=500, detail="Model AI chưa được tải.")
 
-        # Trích xuất số liệu dinh dưỡng
-        real_calories = float(food_info["calories"])
-        real_protein = extract_macro_value(food_info["macros"]["protein"])
-        real_carbs = extract_macro_value(food_info["macros"]["carbs"])
-        real_fat = extract_macro_value(food_info["macros"]["fat"])
+    image_bytes = await file.read()
+    image = Image.open(io.BytesIO(image_bytes)).convert("RGB")
+    logger.info(f"📸 Ảnh nhận được: {file.filename} ({image.size})")
 
-        # 3. Lưu lịch sử quét vào database (Bảng MealLog)
-        new_meal = MealLog(
-            user_id=current_user.id,
-            food_name=food_name,  # Tên món ăn AI nhận diện được
-            calories=real_calories,
-            protein_g=real_protein,
-            carbs_g=real_carbs,
-            fat_g=real_fat,
-            meal_type=meal_type
-        )
-        session.add(new_meal)
-        session.commit()
-        session.refresh(new_meal)
+    food_name, confidence, top3 = predict_image(image)
+    logger.info(f"🎯 Dự đoán: {food_name} ({confidence:.2%})")
 
-        # 4. Trả kết quả thật về cho Frontend hiển thị
-        return {
-            "message": "Phân tích bằng AI thành công!",
-            "food_name": new_meal.food_name,
-            "confidence_score": confidence,
-            "calories": new_meal.calories,
-            "protein_g": new_meal.protein_g,
-            "carbs_g": new_meal.carbs_g,
-            "fat_g": new_meal.fat_g,
+    food_data = _get_food_data(food_name)
+
+    # Tính trước nutrition cho từng đơn vị → frontend hiển thị preview
+    units_with_preview = {}
+    for unit_name, gram in food_data["common_units"].items():
+        nutrition = calculate_nutrition(food_name, gram)
+        units_with_preview[unit_name] = {
+            "gram": gram,
+            "calories_preview": nutrition["calories"]
         }
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Lỗi khi xử lý ảnh AI: {str(e)}")
+
+    return {
+        "food_name": food_name,
+        "confidence_score": round(confidence, 4),
+        "top3_predictions": top3,
+        "portion_options": {
+            "available_units": units_with_preview,
+            "default_unit": food_data["default_unit"],
+        }
+    }
+
+
+# ===================== API 2: CONFIRM (lưu DB) =====================
+@router.post("/vision/confirm")
+async def confirm_meal(
+    body: ConfirmRequest,
+    session: Session = Depends(get_session),
+    current_user: User = Depends(get_current_user)
+):
+    """
+    Bước 2: User xác nhận khẩu phần → tính calories động → lưu DB.
+    Ưu tiên: custom_gram > portion_unit > default_unit
+    """
+    food_data = _get_food_data(body.food_name)
+
+    # Xác định gram thực tế
+    if body.custom_gram and body.custom_gram > 0:
+        gram = body.custom_gram
+        method = "custom_gram"
+    elif body.portion_unit and body.portion_unit in food_data["common_units"]:
+        gram = food_data["common_units"][body.portion_unit]
+        method = "unit_selection"
+    else:
+        # Fallback về default
+        default_unit = food_data["default_unit"]
+        gram = food_data["common_units"].get(default_unit, 300)
+        method = "default"
+
+    nutrition = calculate_nutrition(body.food_name, gram)
+    logger.info(f"💾 Lưu: {body.food_name} | {gram}g | {nutrition['calories']} kcal | method={method}")
+
+    new_meal = MealLog(
+        user_id=current_user.id,
+        food_name=body.food_name,
+        calories=nutrition["calories"],
+        protein_g=nutrition["protein_g"],
+        carbs_g=nutrition["carbs_g"],
+        fat_g=nutrition["fat_g"],
+        meal_type=body.meal_type,
+    )
+    session.add(new_meal)
+    session.commit()
+    session.refresh(new_meal)
+
+    return {
+        "message": "Đã lưu bữa ăn thành công!",
+        "meal_id": new_meal.id,
+        "food_name": new_meal.food_name,
+        "gram": gram,
+        "calories": new_meal.calories,
+        "protein_g": new_meal.protein_g,
+        "carbs_g": new_meal.carbs_g,
+        "fat_g": new_meal.fat_g,
+        "meal_type": new_meal.meal_type,
+        "calculation_method": method,
+    }

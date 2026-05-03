@@ -1,66 +1,97 @@
+# security.py
 from passlib.context import CryptContext
-from datetime import datetime, timedelta
 from jose import JWTError, jwt
-from typing import Optional
-from fastapi import Depends, HTTPException, status
-from fastapi.security import OAuth2PasswordBearer
+from datetime import datetime, timedelta
+import hashlib
+import base64
+import os
 
-# Import đúng chuẩn của SQLModel
-from sqlmodel import Session, select
-from database.connection import get_session
-from models.db_models import User
+# ===================== CONFIG =====================
+SECRET_KEY = os.getenv("SECRET_KEY", "your-secret-key-change-this")
+ALGORITHM = "HS256"
+ACCESS_TOKEN_EXPIRE_MINUTES = 60 * 24  # 1 ngày
 
-# Thay "login" bằng đường dẫn API đăng nhập của bạn
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/v1/login")
-
-# Cấu hình băm mật khẩu
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
-# Cấu hình Token (JWT)
-SECRET_KEY = "SIEURE_GREENHOUSE_KEY" # Bạn có thể đổi cái này thành chuỗi bất kỳ
-ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE_MINUTES = 60 * 24 * 7 # Token có hiệu lực 7 ngày
+
+# ===================== PASSWORD =====================
+def _prepare_password(password: str) -> str:
+    """SHA256 trước khi đưa vào bcrypt → tránh giới hạn 72 bytes."""
+    digest = hashlib.sha256(password.encode("utf-8")).digest()
+    return base64.b64encode(digest).decode("utf-8")  # luôn là 44 ký tự
 
 def get_password_hash(password: str) -> str:
-    return pwd_context.hash(password)
+    """Hash password mới dùng SHA256 + bcrypt"""
+    return pwd_context.hash(_prepare_password(password))
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
-    return pwd_context.verify(plain_password, hashed_password)
+    """
+    ✅ Verify password - support cả 2 method:
+    1. SHA256 + bcrypt (mới)
+    2. Bcrypt trực tiếp (cũ - backup)
+    """
+    # Method 1: Thử SHA256 + bcrypt (mới)
+    try:
+        prepared = _prepare_password(plain_password)
+        if pwd_context.verify(prepared, hashed_password):
+            return True
+    except Exception:
+        pass
+    
+    # Method 2: Thử bcrypt trực tiếp với truncate (cũ - backward compatibility)
+    try:
+        # Truncate password to 72 bytes (bcrypt limit)
+        truncated = plain_password[:72]
+        if pwd_context.verify(truncated, hashed_password):
+            return True
+    except Exception:
+        pass
+    
+    # Cả 2 cách đều fail
+    return False
 
-def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
+
+# ===================== JWT =====================
+def create_access_token(data: dict, expires_delta: timedelta = None) -> str:
     to_encode = data.copy()
-    if expires_delta:
-        expire = datetime.utcnow() + expires_delta
-    else:
-        expire = datetime.utcnow() + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+    expire = datetime.utcnow() + (expires_delta or timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES))
     to_encode.update({"exp": expire})
-    encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
-    return encoded_jwt
+    return jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
 
-# HÀM MỚI: Bắt token từ Request, giải mã và tìm User trong DB
-def get_current_user(token: str = Depends(oauth2_scheme), session: Session = Depends(get_session)):
+def decode_access_token(token: str) -> dict | None:
+    try:
+        return jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+    except JWTError:
+        return None
+
+
+# ===================== GET CURRENT USER =====================
+from fastapi import Depends, HTTPException, status
+from fastapi.security import OAuth2PasswordBearer
+from sqlmodel import Session, select
+from database.connection import get_session
+
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/v1/auth/login")
+
+def get_current_user(
+    token: str = Depends(oauth2_scheme),
+    session: Session = Depends(get_session)
+):
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
-        detail="Không thể xác thực thông tin (Token không hợp lệ hoặc đã hết hạn)",
+        detail="Token không hợp lệ hoặc đã hết hạn",
         headers={"WWW-Authenticate": "Bearer"},
     )
-    
-    try:
-        # Giải mã token
-        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-        
-        # Vì lúc đăng nhập bạn truyền user.id vào "sub", nên ở đây ta lấy ra user_id
-        user_id_str: str = payload.get("sub") 
-        if user_id_str is None:
-            raise credentials_exception
-            
-    except JWTError:
+    payload = decode_access_token(token)
+    if payload is None:
         raise credentials_exception
-        
-    # Truy vấn DB tìm user theo ID bằng sqlmodel
-    user = session.exec(select(User).where(User.id == int(user_id_str))).first()
-    
+
+    user_id: int = payload.get("sub")
+    if user_id is None:
+        raise credentials_exception
+
+    from models.db_models import User
+    user = session.get(User, int(user_id))
     if user is None:
         raise credentials_exception
-        
     return user
