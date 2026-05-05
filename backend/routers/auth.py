@@ -7,7 +7,7 @@ from sqlmodel import Session, select
 
 from models.db_models import User
 
-from models.schemas import UserCreate, UserLogin, Token
+from models.schemas import UserCreate, UserLogin, Token, UserResponse
 from security import get_password_hash, verify_password, create_access_token, get_current_user
 from database.connection import engine, get_session
 
@@ -36,7 +36,9 @@ def register_user(user_data: UserCreate, session: Session = Depends(get_session)
         email=user_data.email,
         phone_number=user_data.phone_number,
         password_hash=hashed_password,
-        full_name=user_data.full_name
+        full_name=user_data.full_name,
+        birth_year=user_data.birth_year,
+        gender=user_data.gender
     )
     
     session.add(new_user)
@@ -63,18 +65,23 @@ def login_user(user_data: UserLogin, session: Session = Depends(get_session)):
     return {
         "access_token": access_token,
         "token_type": "bearer",
-        "full_name": user.full_name
+        "full_name": user.full_name,
+        "birth_year": user.birth_year,
+        "gender": user.gender
     }
 
 
 # ==================== 3. API LẤY THÔNG TIN USER HIỆN TẠI ====================
-@router.get("/users/me")
+@router.get("/users/me", response_model=UserResponse)
 def read_users_me(current_user: User = Depends(get_current_user)):
     return {
         "id": current_user.id,
         "email": current_user.email,
         "full_name": current_user.full_name,
-        "created_at": current_user.created_at
+        "birth_year": current_user.birth_year,
+        "gender": current_user.gender,
+        "phone_number": current_user.phone_number,
+        "created_at": current_user.created_at.isoformat()
     }
 
 # ==================== 4. API YÊU CẦU QUÊN MẬT KHẨU (GỬI LINK) ====================

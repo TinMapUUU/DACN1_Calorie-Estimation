@@ -10,6 +10,8 @@ export default function RegisterPage() {
     const [phone, setPhone] = useState('')
     const [email, setEmail] = useState('')
     const [password, setPassword] = useState('')
+    const [birthYear, setBirthYear] = useState('')
+    const [gender, setGender] = useState('')
     const [loading, setLoading] = useState(false)
     const [error, setError] = useState('')
     const router = useRouter()
@@ -28,7 +30,9 @@ export default function RegisterPage() {
                     email: email,
                     password: password,
                     full_name: fullName,
-                    phone_number: phone
+                    phone_number: phone,
+                    birth_year: parseInt(birthYear),
+                    gender: gender
                 })
             })
 
@@ -127,6 +131,41 @@ export default function RegisterPage() {
                                 pattern="[0-9]{9,11}"
                                 className="w-full px-4 py-3 rounded-full bg-gray-100 focus:ring-2 focus:ring-green-300 outline-none"
                             />
+                        </div>
+
+                        {/* BIRTH YEAR */}
+                        <div>
+                            <label className="block mb-2 text-sm text-gray-500">
+                                Năm sinh
+                            </label>
+                            <input
+                                type="number"
+                                required
+                                value={birthYear}
+                                onChange={(e) => setBirthYear(e.target.value)}
+                                placeholder="Nhập năm sinh của bạn"
+                                min="1950"
+                                max="2016"
+                                className="w-full px-4 py-3 rounded-full bg-gray-100 focus:ring-2 focus:ring-green-300 outline-none"
+                            />
+                        </div>
+
+                        {/* GENDER */}
+                        <div>
+                            <label className="block mb-2 text-sm text-gray-500">
+                                Giới tính
+                            </label>
+                            <select
+                                required
+                                value={gender}
+                                onChange={(e) => setGender(e.target.value)}
+                                className="w-full px-4 py-3 rounded-full bg-gray-100 focus:ring-2 focus:ring-green-300 outline-none"
+                            >
+                                <option value="">-- Chọn giới tính --</option>
+                                <option value="male">Nam</option>
+                                <option value="female">Nữ</option>
+                                <option value="other">Khác</option>
+                            </select>
                         </div>
 
                         {/* EMAIL */}

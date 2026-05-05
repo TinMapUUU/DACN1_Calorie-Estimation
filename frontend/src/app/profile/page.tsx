@@ -13,6 +13,8 @@ export default function ProfilePage() {
     const [userData, setUserData] = useState({
         fullName: "Đang tải...",
         email: "Đang tải...",
+        birthYear: "...",
+        gender: "...",
         id: "...",
         joinDate: "..."
     });
@@ -45,8 +47,10 @@ export default function ProfilePage() {
 
                     // Cập nhật State
                     setUserData({
-                        fullName: data.full_name || "Chưa có tên", // Khớp với cột full_name trong pgAdmin của bạn
+                        fullName: data.full_name || "Chưa có tên",
                         email: data.email || "Chưa có email",
+                        birthYear: data.birth_year || "...",
+                        gender: data.gender === "male" ? "Nam" : data.gender === "female" ? "Nữ" : data.gender === "other" ? "Khác" : "...",
                         id: `NV-${data.id || "000"}`,
                         joinDate: formattedDate
                     });
@@ -111,6 +115,26 @@ export default function ProfilePage() {
                             <button className="px-6 bg-green-300 text-green-900 rounded-xl font-bold hover:bg-green-400 transition-colors">
                                 Cập nhật
                             </button>
+                        </div>
+
+                        {/* Age and Gender in a row */}
+                        <div className="grid grid-cols-2 gap-4">
+                            <div>
+                                <label className="block text-sm text-gray-500 mb-2">Năm sinh</label>
+                                <input
+                                    className="w-full p-3 rounded-xl bg-gray-100 outline-none text-gray-700"
+                                    value={userData.birthYear}
+                                    readOnly
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-sm text-gray-500 mb-2">Giới tính</label>
+                                <input
+                                    className="w-full p-3 rounded-xl bg-gray-100 outline-none text-gray-700"
+                                    value={userData.gender}
+                                    readOnly
+                                />
+                            </div>
                         </div>
                     </div>
                 </div>
