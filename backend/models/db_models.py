@@ -15,6 +15,11 @@ class MealType(str, Enum):
     dinner = "dinner"
     snack = "snack"
 
+class Gender(str, Enum):
+    male = "male"
+    female = "female"
+    other = "other"
+
 # ===================== MODELS =====================
 class User(SQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
@@ -22,6 +27,8 @@ class User(SQLModel, table=True):
     phone_number: str = Field(unique=True, index=True) 
     password_hash: str
     full_name: Optional[str] = None
+    birth_year: int
+    gender: Gender
     created_at: datetime = Field(default_factory=datetime.utcnow)
     
     # Cột phục vụ Quên mật khẩu
@@ -41,6 +48,7 @@ class UserProfile(SQLModel, table=True):
     goal_type: GoalType = GoalType.maintain_weight
     daily_calorie_goal: int
     current_bmi: float
+    activity_level: float = 1.5
     updated_at: datetime = Field(default_factory=datetime.utcnow)
     
     user: User = Relationship(back_populates="profile")

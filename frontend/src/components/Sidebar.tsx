@@ -5,12 +5,12 @@ import { usePathname } from 'next/navigation'
 import clsx from 'clsx'
 
 const menuItems = [
-    { name: 'Dashboard', href: '/dashboard', icon: 'dashboard' },
+    { name: 'Tổng quan', href: '/dashboard', icon: 'dashboard' },
     { name: 'AI Scanner', href: '/AIscaner', icon: 'center_focus_strong', highlight: true },
-    { name: 'History', href: '/history', icon: 'history' },
-    { name: 'BMI & Goals', href: '/bmi', icon: 'monitor_weight' },
-    { name: 'Assistant', href: '/chat', icon: 'forum' },
-    { name: 'Profile', href: '/profile', icon: 'person' },
+    { name: 'Lịch sử', href: '/history', icon: 'history' },
+    { name: 'BMI & Mục tiêu', href: '/bmi', icon: 'monitor_weight' },
+    { name: 'Trợ lý', href: '/chat', icon: 'forum' },
+    { name: 'Cá nhân', href: '/profile', icon: 'person' },
 ]
 
 export default function Sidebar() {
@@ -28,7 +28,7 @@ export default function Sidebar() {
                     Greenhouse
                 </h1>
                 <p className="text-sm text-[#1c6b42]/70">
-                    Vibrant Vitality
+                    Sức sống dồi dào
                 </p>
             </div>
 

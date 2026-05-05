@@ -4,7 +4,8 @@ from fastapi.middleware.cors import CORSMiddleware
 
 # module nội bộ
 from database.connection import create_db_and_tables
-from routers import auth, bmi, scanner
+# 1. THÊM Ở ĐÂY: import thêm history_api
+from routers import auth, bmi, scanner, history_api 
 
 app = FastAPI(title="Greenhouse API")
 
@@ -27,6 +28,9 @@ def on_startup():
 app.include_router(auth.router)
 app.include_router(bmi.router, prefix="/api/v1", tags=["Profile & BMI"])
 app.include_router(scanner.router, prefix="/api/v1", tags=["AI Scanner"])
+
+# 2. THÊM Ở ĐÂY: Đăng ký history_api vào FastAPI
+app.include_router(history_api.router)
 
 @app.get("/")
 def root():

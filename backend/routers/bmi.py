@@ -5,8 +5,9 @@ from datetime import datetime
 
 # Import các file cấu hình của bạn
 from database.connection import get_session
-from models.db_models import User, UserProfile, GoalType
+from models.db_models import User, UserProfile, GoalType, Gender
 from security import get_current_user
+from utils.calorie_calculator import calculate_daily_calories
 
 # Tạo router
 router = APIRouter()
@@ -30,12 +31,15 @@ def update_user_bmi_and_goal(
     
     calculated_bmi = round(data.weight_kg / (height_m * height_m), 1)
 
-    # 2. Tính lượng Calo mục tiêu (Bạn có thể tinh chỉnh công thức này sau)
-    target_calories = 2000 
-    if data.goal_type == GoalType.lose_weight:
-        target_calories = 1500
-    elif data.goal_type == GoalType.gain_weight:
-        target_calories = 2500
+    # 2. Tính lượng Calo mục tiêu dựa trên năm sinh và giới tính (Mifflin-St Jeor formula)
+    target_calories = calculate_daily_calories(
+        weight_kg=data.weight_kg,
+        height_cm=data.height_cm,
+        birth_year=current_user.birth_year,
+        gender=current_user.gender,
+        goal_type=data.goal_type,
+        activity_level=1.5  # Default moderate activity level
+    )
 
     # 3. Tìm Profile hiện tại của user trong database
     profile = session.exec(select(UserProfile).where(UserProfile.user_id == current_user.id)).first()
