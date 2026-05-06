@@ -2,6 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlmodel import Session, select
 from pydantic import BaseModel
 from datetime import datetime
+from dateutil.relativedelta import relativedelta
 
 # Import các file cấu hình của bạn
 from database.connection import get_session
@@ -24,7 +25,7 @@ class ProfileUpdate(BaseModel):
 def update_user_bmi_and_goal(
     data: ProfileUpdate, 
     session: Session = Depends(get_session),
-    current_user: User = Depends(get_current_user) # Bắt buộc phải có token hợp lệ
+    current_user: User = Depends(get_current_user)
 ):
     # 1. Tính toán BMI
     height_m = data.height_cm / 100
@@ -35,7 +36,6 @@ def update_user_bmi_and_goal(
 
     # 2. Tính lượng Calo mục tiêu
     if data.goal_type == GoalType.maintain_weight:
-        # Nếu duy trì: không cần target_weight và duration
         target_calories = calculate_daily_calories(
             weight_kg=data.weight_kg,
             height_cm=data.height_cm,
@@ -45,7 +45,6 @@ def update_user_bmi_and_goal(
             activity_level=1.5
         )
     else:
-        # Nếu tăng/giảm: phải có target_weight và duration
         if not data.target_weight or not data.goal_duration_months:
             raise HTTPException(
                 status_code=400, 
@@ -58,7 +57,6 @@ def update_user_bmi_and_goal(
                 detail="Thời lượng phải là 3, 6, 9 hoặc 12 tháng"
             )
         
-        # Tính dựa trên mục tiêu cụ thể
         target_calories = calculate_daily_calories_with_target(
             weight_kg=data.weight_kg,
             height_cm=data.height_cm,
@@ -74,18 +72,16 @@ def update_user_bmi_and_goal(
     profile = session.exec(select(UserProfile).where(UserProfile.user_id == current_user.id)).first()
     
     if profile:
-        # Nếu đã có -> Cập nhật dữ liệu mới
         profile.weight_kg = data.weight_kg
         profile.height_cm = data.height_cm
         profile.goal_type = data.goal_type
         profile.target_weight = data.target_weight
         profile.goal_duration_months = data.goal_duration_months
-        profile.start_date = datetime.utcnow()  # Ngày bắt đầu là hiện tại
+        profile.start_date = datetime.utcnow()
         profile.current_bmi = calculated_bmi
         profile.daily_calorie_goal = target_calories
         profile.updated_at = datetime.utcnow()
     else:
-        # Nếu chưa có -> Tạo dòng mới
         profile = UserProfile(
             user_id=current_user.id,
             weight_kg=data.weight_kg,
@@ -99,17 +95,13 @@ def update_user_bmi_and_goal(
         )
         session.add(profile)
         
-    # Lưu vào pgAdmin
     session.commit()
     session.refresh(profile)
     
-    # Tính end_date để hiển thị
     end_date = None
     if profile.start_date and profile.goal_duration_months:
-        from dateutil.relativedelta import relativedelta
         end_date = profile.start_date + relativedelta(months=profile.goal_duration_months)
     
-    # Trả kết quả về cho Frontend để hiển thị Alert
     return {
         "message": "Cập nhật thành công", 
         "current_bmi": profile.current_bmi,
@@ -118,6 +110,35 @@ def update_user_bmi_and_goal(
         "goal_duration_months": profile.goal_duration_months,
         "start_date": profile.start_date.isoformat() if profile.start_date else None,
         "end_date": end_date.isoformat() if end_date else None
+    }
+
+
+@router.get("/profile/bmi")  # ← THÊM MỚI: frontend gọi GET /api/v1/profile/bmi
+def get_bmi_profile(
+    session: Session = Depends(get_session),
+    current_user: User = Depends(get_current_user)
+):
+    """Trả về thông tin BMI + mục tiêu để BmiPage tự load khi vào trang"""
+    profile = session.exec(
+        select(UserProfile).where(UserProfile.user_id == current_user.id)
+    ).first()
+
+    if not profile:
+        raise HTTPException(status_code=404, detail="Chưa có hồ sơ")
+
+    end_date = None
+    if profile.start_date and profile.goal_duration_months:
+        end_date = profile.start_date + relativedelta(months=profile.goal_duration_months)
+
+    return {
+        "weight_kg":            profile.weight_kg,
+        "height_cm":            profile.height_cm,
+        "goal_type":            profile.goal_type,
+        "target_weight":        profile.target_weight,
+        "goal_duration_months": profile.goal_duration_months,
+        "daily_calorie_goal":   profile.daily_calorie_goal,
+        "start_date":           profile.start_date.isoformat() if profile.start_date else None,
+        "end_date":             end_date.isoformat() if end_date else None,
     }
 
 
@@ -133,12 +154,12 @@ def get_user_profile(
         raise HTTPException(status_code=404, detail="Profile chưa được thiết lập. Vui lòng cập nhật thông tin cá nhân.")
     
     return {
-        "user_id": profile.user_id,
-        "height_cm": profile.height_cm,
-        "weight_kg": profile.weight_kg,
-        "current_bmi": profile.current_bmi,
+        "user_id":            profile.user_id,
+        "height_cm":          profile.height_cm,
+        "weight_kg":          profile.weight_kg,
+        "current_bmi":        profile.current_bmi,
         "daily_calorie_goal": profile.daily_calorie_goal,
-        "goal_type": profile.goal_type,
-        "activity_level": profile.activity_level,
-        "updated_at": profile.updated_at.isoformat() if profile.updated_at else None
+        "goal_type":          profile.goal_type,
+        "activity_level":     profile.activity_level,
+        "updated_at":         profile.updated_at.isoformat() if profile.updated_at else None
     }
