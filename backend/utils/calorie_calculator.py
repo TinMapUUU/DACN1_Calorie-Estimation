@@ -126,6 +126,71 @@ def calculate_daily_calories(
     
     return int(daily_calories)
 
+
+def calculate_daily_calories_with_target(
+    weight_kg: float,
+    height_cm: float,
+    birth_year: int,
+    gender: Gender,
+    goal_type: GoalType,
+    target_weight: float,
+    goal_duration_months: int,
+    activity_level: float = 1.5
+) -> int:
+    """
+    Calculate daily calorie target based on specific target weight and duration
+    
+    Công thức:
+    - Tính weight difference
+    - Tính số ngày từ duration_months
+    - Tính calories cần để đạt mục tiêu mỗi ngày (dựa trên 7700 kcal = 1kg)
+    - Áp dụng lên TDEE
+    
+    Args:
+        weight_kg: Current body weight in kilograms
+        height_cm: Height in centimeters
+        birth_year: Year of birth
+        gender: Gender (male, female, other)
+        goal_type: Goal type (lose_weight, maintain_weight, gain_weight)
+        target_weight: Target weight in kilograms
+        goal_duration_months: Duration in months (3, 6, 9, 12)
+        activity_level: Activity level multiplier (default 1.5)
+    
+    Returns:
+        Recommended daily calorie intake based on target
+    """
+    bmr = calculate_bmr(weight_kg, height_cm, birth_year, gender)
+    tdee = calculate_tdee(bmr, activity_level)
+    
+    # Nếu goal là maintain, bỏ qua mục tiêu cân nặng
+    if goal_type == GoalType.maintain_weight:
+        return int(tdee)
+    
+    # Tính weight difference (luôn dương)
+    weight_diff = abs(weight_kg - target_weight)
+    
+    # Tính số ngày: duration_months * 30 (làm tròn)
+    total_days = goal_duration_months * 30
+    
+    # Tính calories cần thiết mỗi ngày để đạt mục tiêu
+    # 1 kg fat ~ 7700 kcal
+    daily_calorie_change = (weight_diff * 7700) / total_days
+    
+    if goal_type == GoalType.lose_weight:
+        # Giảm: daily_calories = TDEE - daily_calorie_change
+        daily_calories = tdee - daily_calorie_change
+    else:  # gain_weight
+        # Tăng: daily_calories = TDEE + daily_calorie_change
+        daily_calories = tdee + daily_calorie_change
+    
+    # Ensure minimum calorie intake
+    if gender == Gender.female:
+        daily_calories = max(1200, daily_calories)
+    else:
+        daily_calories = max(1500, daily_calories)
+    
+    return int(daily_calories)
+
 # Example usage and testing
 if __name__ == "__main__":
     # Test case: 70kg male, 175cm, 25 years old, moderate activity

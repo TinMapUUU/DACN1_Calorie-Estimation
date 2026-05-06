@@ -8,3 +8,4 @@ psycopg2-binary
 passlib[bcrypt]
 sqlmodel
 python-jose[cryptography]
+python-dateutil

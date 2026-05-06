@@ -3,6 +3,8 @@ from typing import Optional, List
 from datetime import datetime
 from enum import Enum
 
+
+
 # ===================== ENUMS =====================
 class GoalType(str, Enum):
     lose_weight = "lose_weight"
@@ -46,6 +48,12 @@ class UserProfile(SQLModel, table=True):
     height_cm: float
     weight_kg: float
     goal_type: GoalType = GoalType.maintain_weight
+    
+    # Mục tiêu cụ thể
+    target_weight: Optional[float] = None  # Cân nặng mục tiêu (kg)
+    goal_duration_months: Optional[int] = None  # Thời lượng: 3, 6, 9, 12 tháng
+    start_date: Optional[datetime] = None  # Ngày bắt đầu (khi user nhấn "Lưu")
+    
     daily_calorie_goal: int
     current_bmi: float
     activity_level: float = 1.5

@@ -8,8 +8,11 @@ export default function BmiPage() {
     const [height, setHeight] = useState<string>('');
     const [bmi, setBmi] = useState<number | null>(null);
     const [goal, setGoal] = useState<string>('maintain_weight');
+    const [targetWeight, setTargetWeight] = useState<string>('');
+    const [goalDuration, setGoalDuration] = useState<string>('6');
     const [calorieGoal, setCalorieGoal] = useState<number | null>(null);
     const [isLoading, setIsLoading] = useState<boolean>(false);
+    const [endDate, setEndDate] = useState<string | null>(null);
 
     // Tự động tính BMI ngay khi user nhập xong chiều cao và cân nặng
     useEffect(() => {
@@ -30,6 +33,11 @@ export default function BmiPage() {
             return;
         }
 
+        if (goal !== 'maintain_weight' && (!targetWeight || !goalDuration)) {
+            alert("Vui lòng nhập cân nặng mục tiêu và thời lượng mục tiêu.");
+            return;
+        }
+
         const token = localStorage.getItem('access_token');
         if (!token) {
             alert("Bạn cần đăng nhập để lưu thông tin này.");
@@ -38,23 +46,35 @@ export default function BmiPage() {
 
         setIsLoading(true);
         try {
+            const payload: any = {
+                weight_kg: parseFloat(weight),
+                height_cm: parseFloat(height),
+                goal_type: goal
+            };
+
+            // Chỉ thêm target_weight và goal_duration nếu không phải maintain
+            if (goal !== 'maintain_weight') {
+                payload.target_weight = parseFloat(targetWeight);
+                payload.goal_duration_months = parseInt(goalDuration);
+            }
+
             const response = await fetch('http://127.0.0.1:8000/api/v1/profile/bmi', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                     'Authorization': `Bearer ${token}`
                 },
-                body: JSON.stringify({
-                    weight_kg: parseFloat(weight),
-                    height_cm: parseFloat(height),
-                    goal_type: goal
-                })
+                body: JSON.stringify(payload)
             });
 
             if (response.ok) {
                 const data = await response.json();
                 // Cập nhật calo ra màn hình xanh lá
                 setCalorieGoal(data.daily_calorie_goal);
+                if (data.end_date) {
+                    const endDateObj = new Date(data.end_date);
+                    setEndDate(endDateObj.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' }));
+                }
                 alert("Lưu hồ sơ thành công!");
             } else {
                 const errorData = await response.json();
@@ -154,6 +174,65 @@ export default function BmiPage() {
                                 </div>
                             </div>
 
+                            {/* Target Weight & Duration (hiển thị khi không phải maintain) */}
+                            {goal !== 'maintain_weight' && (
+                                <>
+                                    <div className="grid grid-cols-2 gap-6 mb-8">
+                                        <div>
+                                            <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-3">
+                                                Cân nặng mục tiêu (kg)
+                                            </label>
+                                            <div className="relative">
+                                                <input
+                                                    type="number"
+                                                    value={targetWeight}
+                                                    onChange={e => setTargetWeight(e.target.value)}
+                                                    placeholder={goal === 'lose_weight' ? 'Ví dụ: 65' : 'Ví dụ: 75'}
+                                                    className="w-full bg-[#f2f4f3] text-xl font-medium px-5 py-4 rounded-2xl focus:outline-none focus:ring-2 focus:ring-[#5ca97c] transition-all"
+                                                />
+                                                <span className="absolute right-5 top-1/2 -translate-y-1/2 text-gray-400 font-medium">kg</span>
+                                            </div>
+                                            <p className="text-xs text-gray-500 mt-2">
+                                                Hiện tại: {weight ? parseFloat(weight).toFixed(1) : '--'} kg
+                                            </p>
+                                        </div>
+
+                                        <div>
+                                            <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-3">Thời lượng</label>
+                                            <div className="grid grid-cols-2 gap-3">
+                                                {[3, 6, 9, 12].map(months => (
+                                                    <button
+                                                        key={months}
+                                                        onClick={() => setGoalDuration(months.toString())}
+                                                        className={`py-3 rounded-xl font-bold text-sm transition-all border-2 ${
+                                                            goalDuration === months.toString()
+                                                                ? 'bg-[#5ca97c] border-[#5ca97c] text-white'
+                                                                : 'bg-[#f2f4f3] border-transparent hover:border-gray-200 text-gray-600'
+                                                        }`}
+                                                    >
+                                                        {months}M
+                                                    </button>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* Hiển thị thông tin tính toán */}
+                                    {weight && targetWeight && goalDuration && (
+                                        <div className="bg-blue-50 border border-blue-200 rounded-2xl p-4 mb-8">
+                                            <p className="text-sm text-blue-900 font-medium">
+                                                📊 Bạn cần {goal === 'lose_weight' ? 'giảm' : 'tăng'}{' '}
+                                                <span className="font-bold">{Math.abs(parseFloat(weight) - parseFloat(targetWeight)).toFixed(1)}kg</span>
+                                                {' '}trong {goalDuration} tháng
+                                            </p>
+                                            <p className="text-xs text-blue-700 mt-2">
+                                                Trung bình: {(Math.abs(parseFloat(weight) - parseFloat(targetWeight)) / parseInt(goalDuration)).toFixed(2)} kg/tháng
+                                            </p>
+                                        </div>
+                                    )}
+                                </>
+                            )}
+
                             <button
                                 onClick={handleSave}
                                 disabled={isLoading}
@@ -219,11 +298,18 @@ export default function BmiPage() {
                                 <span className="text-green-100 font-medium mb-1">kcal/day</span>
                             </div>
 
-                            <p className="text-green-100 text-sm opacity-90 leading-relaxed">
+                            <p className="text-green-100 text-sm opacity-90 leading-relaxed mb-4">
                                 {calorieGoal
                                     ? `Optimized for ${goal.replace('_', ' ')} based on your resting metabolic rate.`
                                     : "Lưu hồ sơ để thiết lập mục tiêu năng lượng hằng ngày."}
                             </p>
+
+                            {endDate && (
+                                <div className="bg-white/15 rounded-xl px-3 py-2 text-xs border border-white/20">
+                                    <p className="text-green-100">Ngày hoàn thành mục tiêu:</p>
+                                    <p className="text-white font-bold text-sm">{endDate}</p>
+                                </div>
+                            )}
                         </div>
 
                     </div>
@@ -232,11 +318,19 @@ export default function BmiPage() {
                 {/* GOAL PROJECTION CHART SECTION */}
                 <div className="mt-12">
                     <h2 className="text-3xl font-extrabold text-gray-900 mb-6">Lộ Trình Đạt Mục Tiêu Cân Nặng</h2>
-                    <GoalProjectionChart 
-                        targetWeight={weight ? Math.max(45, parseFloat(weight) - 10) : 65}
-                        currentWeight={weight ? parseFloat(weight) : 75}
-                        targetDate="30/06/2026"
-                    />
+                    {goal === 'maintain_weight' ? (
+                        <div className="bg-white rounded-3xl border border-gray-100 shadow-sm p-8 text-center">
+                            <p className="text-gray-600 font-medium">
+                                Bạn đã chọn duy trì cân nặng. Chọn "Giảm cân" hoặc "Tăng cân" để xem lộ trình.
+                            </p>
+                        </div>
+                    ) : (
+                        <GoalProjectionChart 
+                            targetWeight={targetWeight ? parseFloat(targetWeight) : 65}
+                            currentWeight={weight ? parseFloat(weight) : 75}
+                            targetDate={endDate || "Vui lòng lưu hồ sơ để xem ngày kết thúc"}
+                        />
+                    )}
                 </div>
             </main>
         </div>
