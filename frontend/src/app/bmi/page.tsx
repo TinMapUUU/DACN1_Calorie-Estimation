@@ -1,6 +1,7 @@
 'use client';
 import { useState, useEffect } from "react";
 import Sidebar from "@/components/Sidebar";
+import GoalProjectionChart from "@/components/GoalProjectionChart";
 
 export default function BmiPage() {
     const [weight, setWeight] = useState<string>('');
@@ -226,6 +227,16 @@ export default function BmiPage() {
                         </div>
 
                     </div>
+                </div>
+
+                {/* GOAL PROJECTION CHART SECTION */}
+                <div className="mt-12">
+                    <h2 className="text-3xl font-extrabold text-gray-900 mb-6">Lộ Trình Đạt Mục Tiêu Cân Nặng</h2>
+                    <GoalProjectionChart 
+                        targetWeight={weight ? Math.max(45, parseFloat(weight) - 10) : 65}
+                        currentWeight={weight ? parseFloat(weight) : 75}
+                        targetDate="30/06/2026"
+                    />
                 </div>
             </main>
         </div>

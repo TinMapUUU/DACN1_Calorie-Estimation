@@ -1,5 +1,6 @@
 'use client';
 import Sidebar from "@/components/Sidebar";
+import MealLogItem from "@/components/MealLogItem";
 import { useState, useEffect, useCallback, useRef } from "react";
 // IMPORT THÊM RECHARTS
 import {
@@ -372,32 +373,36 @@ export default function HistoryPage() {
                             <p className="font-medium">Chưa có bữa ăn nào được ghi nhận hôm nay</p>
                         </div>
                     ) : (
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div className="space-y-6">
                             {logs.map((log, idx) => (
-                                <div
-                                    key={idx}
-                                    className="bg-white rounded-3xl p-6 shadow-sm border border-gray-100 hover:shadow-md transition-shadow"
-                                >
-                                    <div className="flex justify-between items-start mb-6">
-                                        <div className="flex items-center gap-4">
-                                            <div className="w-12 h-12 bg-orange-50 rounded-full flex items-center justify-center text-2xl">
-                                                {log.icon}
-                                            </div>
-                                            <div>
-                                                <h3 className="font-bold text-lg text-gray-900">{log.type}</h3>
-                                                <p className="text-xs text-gray-400 font-bold">{log.time}</p>
-                                            </div>
+                                <div key={idx} className="bg-white rounded-3xl p-6 shadow-sm border border-gray-100">
+                                    {/* Meal type header */}
+                                    <div className="flex items-center gap-3 mb-6 pb-4 border-b border-gray-100">
+                                        <div className="w-10 h-10 bg-orange-50 rounded-full flex items-center justify-center text-lg">
+                                            {log.icon}
                                         </div>
-                                        <span className="font-black text-xl text-[#1c6b42]">{log.total} kcal</span>
+                                        <div className="flex-1">
+                                            <h3 className="font-bold text-gray-900 text-base">{log.type}</h3>
+                                            <p className="text-xs text-gray-500 font-medium">{log.time}</p>
+                                        </div>
+                                        <span className="font-extrabold text-xl text-[#1c6b42]">{log.total} kcal</span>
                                     </div>
-                                    <ul className="space-y-3">
+
+                                    {/* Meal items */}
+                                    <div className="space-y-3">
                                         {log.items.map((item, i) => (
-                                            <li key={i} className="flex justify-between items-center text-sm">
-                                                <span className="text-gray-600 font-medium">{item.name}</span>
-                                                <span className="text-gray-400 font-bold">{item.cal} kcal</span>
-                                            </li>
+                                            <MealLogItem
+                                                key={i}
+                                                time={log.time}
+                                                name={item.name}
+                                                calories={item.cal}
+                                                protein={Math.round(item.cal * 0.25 / 4)} // Estimation: 25% of cals from protein
+                                                carbs={Math.round(item.cal * 0.50 / 4)} // Estimation: 50% of cals from carbs
+                                                fat={Math.round(item.cal * 0.25 / 9)} // Estimation: 25% of cals from fat
+                                                icon={log.icon}
+                                            />
                                         ))}
-                                    </ul>
+                                    </div>
                                 </div>
                             ))}
                         </div>

@@ -29,7 +29,7 @@ class User(SQLModel, table=True):
     full_name: Optional[str] = None
     birth_year: int
     gender: Gender
-    created_at: datetime = Field(default_factory=datetime.utcnow)
+    created_at: datetime = Field(default_factory=datetime.now)
     
     # Cột phục vụ Quên mật khẩu
     reset_code: Optional[str] = None
@@ -49,7 +49,7 @@ class UserProfile(SQLModel, table=True):
     daily_calorie_goal: int
     current_bmi: float
     activity_level: float = 1.5
-    updated_at: datetime = Field(default_factory=datetime.utcnow)
+    updated_at: datetime = Field(default_factory=datetime.now)
     
     user: User = Relationship(back_populates="profile")
 
@@ -63,6 +63,6 @@ class MealLog(SQLModel, table=True):
     carbs_g: float = 0
     fat_g: float = 0
     meal_type: MealType
-    scanned_at: datetime = Field(default_factory=datetime.utcnow)
+    scanned_at: datetime = Field(default_factory=datetime.now)
     
     user: User = Relationship(back_populates="meals")

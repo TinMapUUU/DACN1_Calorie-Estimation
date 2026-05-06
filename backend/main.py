@@ -12,7 +12,7 @@ app = FastAPI(title="Greenhouse API")
 # Cấu hình CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000"],  # Cho phép frontend Next.js gọi API
+    allow_origins=["http://localhost:3000", "http://localhost:3001"],  # Cho phép frontend Next.js gọi API
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
