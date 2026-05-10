@@ -123,7 +123,7 @@ export default function DashboardPage() {
                         {greeting}
                     </h2>
                     <p className="text-gray-500 font-medium text-sm">
-                        Here is your vitality summary for today.
+                        Đây là tóm tắt năng lượng của bạn hôm nay.
                     </p>
                 </header>
 
@@ -166,7 +166,7 @@ export default function DashboardPage() {
                             
                             {/* WIDGET 2: REMAINING */}
                             <div className="bg-[#f7f9f8] p-6 rounded-[2rem] flex flex-col justify-between h-full border border-gray-100">
-                                <h3 className="font-medium text-gray-600 text-sm mb-4">Remaining Allowance</h3>
+                                <h3 className="font-medium text-gray-600 text-sm mb-4">Lượng Calories Còn Lại</h3>
                                 <div className="flex justify-between items-end mb-4">
                                     <span className="text-4xl font-bold text-gray-900 tracking-tight">
                                         {remainingCalories}
@@ -175,14 +175,14 @@ export default function DashboardPage() {
                                         <span className="material-symbols-outlined text-xl">restaurant</span>
                                     </div>
                                 </div>
-                                <p className="text-xs text-gray-500 font-medium">Ideal for a light dinner.</p>
+                                <p className="text-xs text-gray-500 font-medium">Lý tưởng cho một bữa tối nhẹ nhàng.</p>
                             </div>
 
                             {/* WIDGET 3: BMI STATUS */}
                             <div className="bg-[#ffebe0] p-6 rounded-[2rem] flex flex-col justify-between h-full border border-orange-50">
                                 <div className="flex items-center gap-2 mb-4">
                                     <span className="material-symbols-outlined text-orange-900 text-sm">monitor_weight</span>
-                                    <h3 className="font-medium text-orange-900 text-sm">BMI Status</h3>
+                                    <h3 className="font-medium text-orange-900 text-sm">Tình Trạng BMI</h3>
                                 </div>
                                 <div>
                                     <span className="block text-2xl font-bold text-orange-950 mb-1">
@@ -199,15 +199,15 @@ export default function DashboardPage() {
                                 <h3 className="font-semibold text-gray-800 text-sm mb-4">Macros Còn Lại</h3>
                                 <div className="space-y-3">
                                     <div className="flex justify-between items-center text-xs">
-                                        <span className="text-gray-600 font-medium">Protein</span>
+                                        <span className="text-gray-600 font-medium">Đạm (Protein)</span>
                                         <span className="font-bold text-blue-600">{remainingProtein}g</span>
                                     </div>
                                     <div className="flex justify-between items-center text-xs">
-                                        <span className="text-gray-600 font-medium">Carbs</span>
+                                        <span className="text-gray-600 font-medium">Tinh bột (Carbs)</span>
                                         <span className="font-bold text-purple-600">{remainingCarbs}g</span>
                                     </div>
                                     <div className="flex justify-between items-center text-xs">
-                                        <span className="text-gray-600 font-medium">Fat</span>
+                                        <span className="text-gray-600 font-medium">Chất béo (Fat)</span>
                                         <span className="font-bold text-amber-600">{remainingFat}g</span>
                                     </div>
                                 </div>

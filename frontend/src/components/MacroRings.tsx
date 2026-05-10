@@ -106,13 +106,13 @@ export default function MacroRings({
             {/* Chú thích (Legend) */}
             <div className="flex flex-col gap-4">
                 <div>
-                    <h3 className="text-gray-800 font-bold text-lg mb-4">Macro Balance</h3>
+                    <h3 className="text-gray-800 font-bold text-lg mb-4">Cân bằng Macro</h3>
                 </div>
 
                 <div className="flex items-center gap-3">
                     <span className="w-4 h-4 rounded-full bg-red-500 shrink-0"></span>
                     <div>
-                        <p className="text-gray-700 font-semibold text-sm">Protein</p>
+                        <p className="text-gray-700 font-semibold text-sm">Đạm (Protein)</p>
                         <p className="text-gray-500 text-xs">
                             {protein}g / {proteinTarget}g
                         </p>
@@ -122,7 +122,7 @@ export default function MacroRings({
                 <div className="flex items-center gap-3">
                     <span className="w-4 h-4 rounded-full bg-blue-500 shrink-0"></span>
                     <div>
-                        <p className="text-gray-700 font-semibold text-sm">Carbs</p>
+                        <p className="text-gray-700 font-semibold text-sm">Tinh bột (Carbs)</p>
                         <p className="text-gray-500 text-xs">
                             {carbs}g / {carbsTarget}g
                         </p>
@@ -132,7 +132,7 @@ export default function MacroRings({
                 <div className="flex items-center gap-3">
                     <span className="w-4 h-4 rounded-full bg-yellow-500 shrink-0"></span>
                     <div>
-                        <p className="text-gray-700 font-semibold text-sm">Fat</p>
+                        <p className="text-gray-700 font-semibold text-sm">Chất béo (Fat)</p>
                         <p className="text-gray-500 text-xs">
                             {fat}g / {fatTarget}g
                         </p>
@@ -142,9 +142,9 @@ export default function MacroRings({
                 <div className="flex items-center gap-3 pt-2 border-t border-gray-100">
                     <span className="w-4 h-4 rounded-full bg-[#1c6b42] shrink-0"></span>
                     <div>
-                        <p className="text-gray-700 font-semibold text-sm">Total</p>
+                        <p className="text-gray-700 font-semibold text-sm">Tổng cộng</p>
                         <p className="text-gray-500 text-xs">
-                            {((calPct + proPct + carbPct + fatPct) / 4).toFixed(0)}% completed
+                            {((calPct + proPct + carbPct + fatPct) / 4).toFixed(0)}% hoàn thành
                         </p>
                     </div>
                 </div>

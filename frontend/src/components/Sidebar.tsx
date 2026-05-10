@@ -6,7 +6,7 @@ import clsx from 'clsx'
 
 const menuItems = [
     { name: 'Tổng quan', href: '/dashboard', icon: 'dashboard' },
-    { name: 'AI Scanner', href: '/AIscaner', icon: 'center_focus_strong', highlight: true },
+    { name: 'Quét Bằng AI', href: '/AIscaner', icon: 'center_focus_strong', highlight: true },
     { name: 'Lịch sử', href: '/history', icon: 'history' },
     { name: 'BMI & Mục tiêu', href: '/bmi', icon: 'monitor_weight' },
     { name: 'Trợ lý', href: '/chat', icon: 'forum' },
@@ -75,7 +75,7 @@ export default function Sidebar() {
             {/* FOOTER */}
             <div className="px-4">
                 <button className="w-full py-3 bg-[#1c6b42] text-white rounded-full font-bold hover:opacity-90 active:scale-95 transition">
-                    Go Premium
+                    Nâng Cấp Premium
                 </button>
             </div>
 

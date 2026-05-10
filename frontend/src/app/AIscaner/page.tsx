@@ -256,7 +256,7 @@ export default function AiScannerPage() {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [previewImage, setPreviewImage] = useState<string>(
-    'https://placehold.co/600x400/eceeed/a3a3a3?text=No+Image+Selected'
+    'https://placehold.co/600x400/eceeed/a3a3a3?text=Chua+Chon+Anh'
   );
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [isConfirming, setIsConfirming] = useState(false);
@@ -383,7 +383,7 @@ export default function AiScannerPage() {
           {/* Header */}
           <header className="mb-10 lg:mb-16">
             <h2 className="text-[#191c1c] text-4xl lg:text-5xl font-['Plus_Jakarta_Sans'] font-extrabold tracking-tight mb-3">
-              Vision Engine
+              Quét Bằng AI
             </h2>
             <p className="text-gray-500 text-lg max-w-xl">
               Chụp ảnh bữa ăn — AI nhận diện, bạn chọn khẩu phần, hệ thống tính calories.

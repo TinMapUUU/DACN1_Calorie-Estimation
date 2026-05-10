@@ -150,7 +150,7 @@ export default function GoalProjectionChart({
             <div className="p-8">
                 {/* Header */}
                 <div className="mb-6">
-                    <h3 className="text-lg font-bold text-gray-900 mb-1">Weight Goal Projection</h3>
+                    <h3 className="text-lg font-bold text-gray-900 mb-1">Dự báo mục tiêu cân nặng</h3>
                     <p className="text-sm text-[#1c6b42] font-semibold">
                         ✨ Cố lên! Bạn sẽ đạt {targetWeight}kg
                         {targetDate ? ` vào ngày ${targetDate}` : ` trong ${goalDurationMonths} tháng`}.

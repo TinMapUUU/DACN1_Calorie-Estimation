@@ -26,138 +26,138 @@ logging.basicConfig(
 
 # ===================== CLASS NAMES =====================
 CLASS_NAMES = [
-    "Banh beo", "Banh bot loc", "Banh can", "Banh canh", "Banh chung",
-    "Banh cuon", "Banh duc", "Banh gio", "Banh khot", "Banh mi",
-    "Banh pia", "Banh tet", "Banh trang nuong", "Banh xeo", "Bo kho",
-    "Bun bo Hue", "Bun dau mam tom", "Bun mam", "Bun rieu", "Bun thit nuong",
-    "Ca chien", "Ca hap", "Ca kho", "Canh bi do", "Canh chua",
-    "Canh cua", "Canh ham", "Canh kho qua", "Cao lau", "Chao long",
-    "Com tam", "Ech nuong", "Ech xao", "Goi cuon", "Hu tieu",
-    "Luon xao", "Mi quang", "Muc chien", "Muc hap", "Muc nuong",
-    "Muc xao", "Nem chua", "Pho", "Rau cu luoc", "Rau cu xao",
-    "Suon xao", "Thit chien", "Thit kho", "Thit roti", "Thit xa xiu",
-    "Tom chien", "Tom luoc", "Tom nuong", "Xoi xeo"
+    "Bánh bèo", "Bánh bột lọc", "Bánh căn", "Bánh canh", "Bánh chưng",
+    "Bánh cuốn", "Bánh đúc", "Bánh giò", "Bánh khọt", "Bánh mì",
+    "Bánh pía", "Bánh tét", "Bánh tráng nướng", "Bánh xèo", "Bò kho",
+    "Bún bò Huế", "Bún đậu mắm tôm", "Bún mắm", "Bún riêu", "Bún thịt nướng",
+    "Cá chiên", "Cá hấp", "Cá kho", "Canh bí đỏ", "Canh chua",
+    "Canh cua", "Canh hầm", "Canh khổ qua", "Cao lầu", "Cháo lòng",
+    "Cơm tấm", "Ếch nướng", "Ếch xào", "Gỏi cuốn", "Hủ tiếu",
+    "Lươn xào", "Mì quảng", "Mực chiên", "Mực hấp", "Mực nướng",
+    "Mực xào", "Nem chua", "Phở", "Rau củ luộc", "Rau củ xào",
+    "Sườn xào", "Thịt chiên", "Thịt kho", "Thịt roti", "Thịt xá xíu",
+    "Tôm chiên", "Tôm luộc", "Tôm nướng", "Xôi xéo"
 ]
 
 # ===================== VIETNAMESE FOOD DB =====================
 # calories/macros tính trên 100g, common_units là gram thực tế của khẩu phần
 VIETNAMESE_FOOD_DB = {
-    "Banh beo": {
+    "Bánh bèo": {
         "calo_per_100g": 140, "protein_per_100g": 4.0, "carbs_per_100g": 17.5, "fat_per_100g": 6.0,
         "default_unit": "1 đĩa (5-6 cái)",
         "common_units": {"1 đĩa nhỏ (4 cái)": 150, "1 đĩa (5-6 cái)": 200, "1 đĩa lớn (8 cái)": 280}
     },
-    "Banh bot loc": {
+    "Bánh bột lọc": {
         "calo_per_100g": 110, "protein_per_100g": 2.8, "carbs_per_100g": 16.5, "fat_per_100g": 3.3,
         "default_unit": "1 phần (6-8 cái)",
         "common_units": {"1 phần nhỏ (4 cái)": 140, "1 phần (6-8 cái)": 180, "1 phần lớn (10 cái)": 240}
     },
-    "Banh can": {
+    "Bánh căn": {
         "calo_per_100g": 115, "protein_per_100g": 3.1, "carbs_per_100g": 15.4, "fat_per_100g": 3.8,
         "default_unit": "1 phần (8 cái)",
         "common_units": {"1 phần nhỏ (6 cái)": 100, "1 phần (8 cái)": 130, "1 phần lớn (10 cái)": 160}
     },
-    "Banh canh": {
+    "Bánh canh": {
         "calo_per_100g": 95, "protein_per_100g": 3.3, "carbs_per_100g": 12.2, "fat_per_100g": 3.3,
         "default_unit": "1 tô tiêu chuẩn",
         "common_units": {"1 tô nhỏ": 300, "1 tô tiêu chuẩn": 370, "1 tô lớn": 480}
     },
-    "Banh chung": {
+    "Bánh chưng": {
         "calo_per_100g": 175, "protein_per_100g": 5.5, "carbs_per_100g": 20.8, "fat_per_100g": 7.7,
         "default_unit": "1 miếng vừa",
         "common_units": {"1/4 bánh": 130, "1 miếng vừa": 183, "1/2 bánh": 260}
     },
-    "Banh cuon": {
+    "Bánh cuốn": {
         "calo_per_100g": 110, "protein_per_100g": 4.9, "carbs_per_100g": 13.4, "fat_per_100g": 3.7,
         "default_unit": "1 phần (3 cuốn)",
         "common_units": {"1 phần nhỏ (2 cuốn)": 110, "1 phần (3 cuốn)": 165, "1 phần lớn (4 cuốn)": 220}
     },
-    "Banh duc": {
+    "Bánh đúc": {
         "calo_per_100g": 118, "protein_per_100g": 3.2, "carbs_per_100g": 17.2, "fat_per_100g": 3.8,
         "default_unit": "1 phần vừa",
         "common_units": {"1 phần nhỏ": 150, "1 phần vừa": 185, "1 phần lớn": 240}
     },
-    "Banh gio": {
+    "Bánh giò": {
         "calo_per_100g": 150, "protein_per_100g": 6.3, "carbs_per_100g": 17.5, "fat_per_100g": 6.3,
         "default_unit": "1 cái bình thường",
         "common_units": {"1 cái nhỏ": 120, "1 cái bình thường": 160, "1 cái lớn": 210}
     },
-    "Banh khot": {
+    "Bánh khọt": {
         "calo_per_100g": 145, "protein_per_100g": 4.7, "carbs_per_100g": 16.6, "fat_per_100g": 6.2,
         "default_unit": "1 đĩa (6-8 cái)",
         "common_units": {"1 đĩa nhỏ (5 cái)": 150, "1 đĩa (6-8 cái)": 195, "1 đĩa lớn (10 cái)": 255}
     },
-    "Banh mi": {
+    "Bánh mì": {
         "calo_per_100g": 255, "protein_per_100g": 14.2, "carbs_per_100g": 28.5, "fat_per_100g": 8.5,
         "default_unit": "1 ổ bình thường",
         "common_units": {"1/2 ổ": 88, "1 ổ bình thường": 175, "1 ổ lớn": 230}
     },
-    "Banh pia": {
+    "Bánh pía": {
         "calo_per_100g": 390, "protein_per_100g": 10.3, "carbs_per_100g": 49.2, "fat_per_100g": 16.4,
         "default_unit": "1 cái",
         "common_units": {"1/2 cái": 49, "1 cái": 97, "2 cái": 194}
     },
-    "Banh tet": {
+    "Bánh tét": {
         "calo_per_100g": 165, "protein_per_100g": 6.0, "carbs_per_100g": 19.7, "fat_per_100g": 6.6,
         "default_unit": "1 khoanh vừa",
         "common_units": {"1 khoanh mỏng": 130, "1 khoanh vừa": 180, "2 khoanh": 360}
     },
-    "Banh trang nuong": {
+    "Bánh tráng nướng": {
         "calo_per_100g": 110, "protein_per_100g": 2.7, "carbs_per_100g": 16.5, "fat_per_100g": 2.7,
         "default_unit": "1 cái bình thường",
         "common_units": {"1 cái nhỏ": 75, "1 cái bình thường": 110, "1 cái lớn": 150}
     },
-    "Banh xeo": {
+    "Bánh xèo": {
         "calo_per_100g": 155, "protein_per_100g": 6.7, "carbs_per_100g": 15.6, "fat_per_100g": 8.0,
         "default_unit": "1 cái bình thường",
         "common_units": {"1/2 cái": 115, "1 cái bình thường": 225, "1 cái lớn": 300}
     },
-    "Bo kho": {
+    "Bò kho": {
         "calo_per_100g": 120, "protein_per_100g": 8.0, "carbs_per_100g": 7.1, "fat_per_100g": 6.3,
         "default_unit": "1 tô bình thường",
         "common_units": {"1 tô nhỏ": 280, "1 tô bình thường": 350, "1 tô lớn": 450}
     },
-    "Bun bo Hue": {
+    "Bún bò Huế": {
         "calo_per_100g": 100, "protein_per_100g": 5.6, "carbs_per_100g": 13.0, "fat_per_100g": 3.0,
         "default_unit": "1 tô tiêu chuẩn",
         "common_units": {"1 tô nhỏ": 400, "1 tô tiêu chuẩn": 500, "1 tô đặc biệt": 650}
     },
-    "Bun dau mam tom": {
+    "Bún đậu mắm tôm": {
         "calo_per_100g": 130, "protein_per_100g": 6.2, "carbs_per_100g": 15.4, "fat_per_100g": 4.1,
         "default_unit": "1 phần bình thường",
         "common_units": {"1 phần nhỏ": 240, "1 phần bình thường": 290, "1 phần lớn": 380}
     },
-    "Bun mam": {
+    "Bún mắm": {
         "calo_per_100g": 88, "protein_per_100g": 3.3, "carbs_per_100g": 11.6, "fat_per_100g": 2.8,
         "default_unit": "1 tô tiêu chuẩn",
         "common_units": {"1 tô nhỏ": 300, "1 tô tiêu chuẩn": 365, "1 tô lớn": 480}
     },
-    "Bun rieu": {
+    "Bún riêu": {
         "calo_per_100g": 95, "protein_per_100g": 3.8, "carbs_per_100g": 12.5, "fat_per_100g": 3.0,
         "default_unit": "1 tô tiêu chuẩn",
         "common_units": {"1 tô nhỏ": 320, "1 tô tiêu chuẩn": 400, "1 tô lớn": 530}
     },
-    "Bun thit nuong": {
+    "Bún thịt nướng": {
         "calo_per_100g": 115, "protein_per_100g": 6.6, "carbs_per_100g": 14.2, "fat_per_100g": 3.8,
         "default_unit": "1 tô bình thường",
         "common_units": {"1 tô nhỏ": 300, "1 tô bình thường": 365, "1 tô lớn": 480}
     },
-    "Ca chien": {
+    "Cá chiên": {
         "calo_per_100g": 190, "protein_per_100g": 14.0, "carbs_per_100g": 9.0, "fat_per_100g": 10.0,
         "default_unit": "1 con vừa",
         "common_units": {"1 miếng nhỏ": 120, "1 con vừa": 200, "1 con lớn": 300}
     },
-    "Ca hap": {
+    "Cá hấp": {
         "calo_per_100g": 130, "protein_per_100g": 14.9, "carbs_per_100g": 3.7, "fat_per_100g": 6.5,
         "default_unit": "1 con vừa",
         "common_units": {"1 miếng": 150, "1 con vừa": 215, "1 con lớn": 330}
     },
-    "Ca kho": {
+    "Cá kho": {
         "calo_per_100g": 160, "protein_per_100g": 15.0, "carbs_per_100g": 6.0, "fat_per_100g": 8.0,
         "default_unit": "1 con vừa",
         "common_units": {"1 miếng": 130, "1 con vừa": 200, "1 con lớn": 280}
     },
-    "Canh bi do": {
+    "Canh bí đỏ": {
         "calo_per_100g": 48, "protein_per_100g": 2.4, "carbs_per_100g": 6.0, "fat_per_100g": 1.6,
         "default_unit": "1 tô bình thường",
         "common_units": {"1 chén": 150, "1 tô bình thường": 250, "1 tô lớn": 380}
@@ -172,77 +172,77 @@ VIETNAMESE_FOOD_DB = {
         "default_unit": "1 tô bình thường",
         "common_units": {"1 chén": 150, "1 tô bình thường": 280, "1 tô lớn": 400}
     },
-    "Canh ham": {
+    "Canh hầm": {
         "calo_per_100g": 58, "protein_per_100g": 4.3, "carbs_per_100g": 3.6, "fat_per_100g": 2.9,
         "default_unit": "1 tô bình thường",
         "common_units": {"1 chén": 140, "1 tô bình thường": 280, "1 tô lớn": 400}
     },
-    "Canh kho qua": {
+    "Canh khổ qua": {
         "calo_per_100g": 42, "protein_per_100g": 1.9, "carbs_per_100g": 5.3, "fat_per_100g": 1.5,
         "default_unit": "1 tô bình thường",
         "common_units": {"1 chén": 160, "1 tô bình thường": 260, "1 tô lớn": 380}
     },
-    "Cao lau": {
+    "Cao lầu": {
         "calo_per_100g": 118, "protein_per_100g": 4.5, "carbs_per_100g": 14.6, "fat_per_100g": 4.5,
         "default_unit": "1 tô tiêu chuẩn",
         "common_units": {"1 tô nhỏ": 280, "1 tô tiêu chuẩn": 355, "1 tô lớn": 460}
     },
-    "Chao long": {
+    "Cháo lòng": {
         "calo_per_100g": 105, "protein_per_100g": 5.5, "carbs_per_100g": 8.8, "fat_per_100g": 5.0,
         "default_unit": "1 tô tiêu chuẩn",
         "common_units": {"1 tô nhỏ": 300, "1 tô tiêu chuẩn": 360, "1 tô lớn": 480}
     },
-    "Com tam": {
+    "Cơm tấm": {
         "calo_per_100g": 175, "protein_per_100g": 8.75, "carbs_per_100g": 20.0, "fat_per_100g": 6.25,
         "default_unit": "1 dĩa bình thường",
         "common_units": {"1 dĩa nhỏ": 300, "1 dĩa bình thường": 400, "1 dĩa lớn": 550}
     },
-    "Ech nuong": {
+    "Ếch nướng": {
         "calo_per_100g": 145, "protein_per_100g": 16.5, "carbs_per_100g": 4.1, "fat_per_100g": 7.2,
         "default_unit": "1 phần bình thường",
         "common_units": {"1 phần nhỏ": 150, "1 phần bình thường": 195, "1 phần lớn": 260}
     },
-    "Ech xao": {
+    "Ếch xào": {
         "calo_per_100g": 160, "protein_per_100g": 17.5, "carbs_per_100g": 5.0, "fat_per_100g": 8.0,
         "default_unit": "1 phần bình thường",
         "common_units": {"1 phần nhỏ": 150, "1 phần bình thường": 200, "1 phần lớn": 270}
     },
-    "Goi cuon": {
+    "Gỏi cuốn": {
         "calo_per_100g": 105, "protein_per_100g": 4.8, "carbs_per_100g": 13.3, "fat_per_100g": 3.8,
         "default_unit": "2 cuốn",
         "common_units": {"1 cuốn": 105, "2 cuốn": 210, "3 cuốn": 315}
     },
-    "Hu tieu": {
+    "Hủ tiếu": {
         "calo_per_100g": 95, "protein_per_100g": 3.8, "carbs_per_100g": 13.0, "fat_per_100g": 2.7,
         "default_unit": "1 tô tiêu chuẩn",
         "common_units": {"1 tô nhỏ": 300, "1 tô tiêu chuẩn": 370, "1 tô lớn": 480}
     },
-    "Luon xao": {
+    "Lươn xào": {
         "calo_per_100g": 158, "protein_per_100g": 14.7, "carbs_per_100g": 6.3, "fat_per_100g": 8.4,
         "default_unit": "1 phần bình thường",
         "common_units": {"1 phần nhỏ": 140, "1 phần bình thường": 190, "1 phần lớn": 260}
     },
-    "Mi quang": {
+    "Mì quảng": {
         "calo_per_100g": 110, "protein_per_100g": 4.7, "carbs_per_100g": 13.7, "fat_per_100g": 3.7,
         "default_unit": "1 tô tiêu chuẩn",
         "common_units": {"1 tô nhỏ": 300, "1 tô tiêu chuẩn": 380, "1 tô lớn": 500}
     },
-    "Muc chien": {
+    "Mực chiên": {
         "calo_per_100g": 185, "protein_per_100g": 14.1, "carbs_per_100g": 9.8, "fat_per_100g": 9.8,
         "default_unit": "1 phần bình thường",
         "common_units": {"1 phần nhỏ": 130, "1 phần bình thường": 185, "1 phần lớn": 250}
     },
-    "Muc hap": {
+    "Mực hấp": {
         "calo_per_100g": 142, "protein_per_100g": 14.2, "carbs_per_100g": 6.1, "fat_per_100g": 6.1,
         "default_unit": "1 phần bình thường",
         "common_units": {"1 phần nhỏ": 140, "1 phần bình thường": 197, "1 phần lớn": 270}
     },
-    "Muc nuong": {
+    "Mực nướng": {
         "calo_per_100g": 160, "protein_per_100g": 15.0, "carbs_per_100g": 5.0, "fat_per_100g": 8.0,
         "default_unit": "1 phần bình thường",
         "common_units": {"1 phần nhỏ": 140, "1 phần bình thường": 200, "1 phần lớn": 270}
     },
-    "Muc xao": {
+    "Mực xào": {
         "calo_per_100g": 150, "protein_per_100g": 13.0, "carbs_per_100g": 7.0, "fat_per_100g": 7.0,
         "default_unit": "1 phần bình thường",
         "common_units": {"1 phần nhỏ": 140, "1 phần bình thường": 200, "1 phần lớn": 260}
@@ -252,62 +252,62 @@ VIETNAMESE_FOOD_DB = {
         "default_unit": "3 cái",
         "common_units": {"2 cái": 100, "3 cái": 140, "5 cái": 235}
     },
-    "Pho": {
+    "Phở": {
         "calo_per_100g": 80, "protein_per_100g": 4.0, "carbs_per_100g": 12.0, "fat_per_100g": 2.0,
         "default_unit": "1 tô tiêu chuẩn",
         "common_units": {"1 tô nhỏ": 400, "1 tô tiêu chuẩn": 500, "1 tô đặc biệt": 650}
     },
-    "Rau cu luoc": {
+    "Rau củ luộc": {
         "calo_per_100g": 55, "protein_per_100g": 3.1, "carbs_per_100g": 7.0, "fat_per_100g": 1.6,
         "default_unit": "1 đĩa bình thường",
         "common_units": {"1 đĩa nhỏ": 180, "1 đĩa bình thường": 255, "1 đĩa lớn": 360}
     },
-    "Rau cu xao": {
+    "Rau củ xào": {
         "calo_per_100g": 75, "protein_per_100g": 4.2, "carbs_per_100g": 8.3, "fat_per_100g": 3.3,
         "default_unit": "1 đĩa bình thường",
         "common_units": {"1 đĩa nhỏ": 170, "1 đĩa bình thường": 240, "1 đĩa lớn": 330}
     },
-    "Suon xao": {
+    "Sườn xào": {
         "calo_per_100g": 195, "protein_per_100g": 14.9, "carbs_per_100g": 7.4, "fat_per_100g": 11.2,
         "default_unit": "1 phần bình thường",
         "common_units": {"1 phần nhỏ": 160, "1 phần bình thường": 215, "1 phần lớn": 300}
     },
-    "Thit chien": {
+    "Thịt chiên": {
         "calo_per_100g": 210, "protein_per_100g": 16.6, "carbs_per_100g": 6.6, "fat_per_100g": 12.2,
         "default_unit": "1 phần bình thường",
         "common_units": {"1 phần nhỏ": 130, "1 phần bình thường": 180, "1 phần lớn": 250}
     },
-    "Thit kho": {
+    "Thịt kho": {
         "calo_per_100g": 200, "protein_per_100g": 14.0, "carbs_per_100g": 9.0, "fat_per_100g": 12.0,
         "default_unit": "1 phần bình thường",
         "common_units": {"1 phần nhỏ": 140, "1 phần bình thường": 200, "1 phần lớn": 280}
     },
-    "Thit roti": {
+    "Thịt roti": {
         "calo_per_100g": 210, "protein_per_100g": 16.0, "carbs_per_100g": 10.0, "fat_per_100g": 11.0,
         "default_unit": "1 phần bình thường",
         "common_units": {"1 phần nhỏ": 140, "1 phần bình thường": 200, "1 phần lớn": 270}
     },
-    "Thit xa xiu": {
+    "Thịt xá xíu": {
         "calo_per_100g": 215, "protein_per_100g": 16.6, "carbs_per_100g": 10.7, "fat_per_100g": 11.7,
         "default_unit": "1 phần bình thường",
         "common_units": {"1 phần nhỏ": 140, "1 phần bình thường": 205, "1 phần lớn": 280}
     },
-    "Tom chien": {
+    "Tôm chiên": {
         "calo_per_100g": 175, "protein_per_100g": 15.3, "carbs_per_100g": 6.5, "fat_per_100g": 8.7,
         "default_unit": "1 phần bình thường",
         "common_units": {"1 phần nhỏ": 130, "1 phần bình thường": 182, "1 phần lớn": 250}
     },
-    "Tom luoc": {
+    "Tôm luộc": {
         "calo_per_100g": 130, "protein_per_100g": 15.0, "carbs_per_100g": 4.0, "fat_per_100g": 5.0,
         "default_unit": "1 phần bình thường",
         "common_units": {"1 phần nhỏ": 130, "1 phần bình thường": 200, "1 phần lớn": 280}
     },
-    "Tom nuong": {
+    "Tôm nướng": {
         "calo_per_100g": 148, "protein_per_100g": 15.8, "carbs_per_100g": 4.9, "fat_per_100g": 6.9,
         "default_unit": "1 phần bình thường",
         "common_units": {"1 phần nhỏ": 140, "1 phần bình thường": 203, "1 phần lớn": 270}
     },
-    "Xoi xeo": {
+    "Xôi xéo": {
         "calo_per_100g": 145, "protein_per_100g": 3.3, "carbs_per_100g": 21.5, "fat_per_100g": 4.1,
         "default_unit": "1 gói/chén bình thường",
         "common_units": {"1 chén nhỏ": 180, "1 gói/chén bình thường": 240, "1 gói lớn": 350}

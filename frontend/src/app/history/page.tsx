@@ -197,13 +197,13 @@ export default function HistoryPage() {
                     <div>
                         <div className="flex items-center gap-3 mb-2">
                             <h2 className="text-gray-900 text-3xl md:text-4xl font-extrabold tracking-tight">
-                                Nutrition History
+                                Lịch sử dinh dưỡng
                             </h2>
                             <span className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold
                                 ${error ? "bg-red-100 text-red-600" : "bg-green-100 text-green-700"}`}>
                                 <span className={`w-2 h-2 rounded-full ${error ? "bg-red-500" : "bg-green-500"}
                                     ${liveIndicator ? "animate-ping" : "animate-pulse"}`} />
-                                {error ? "Offline" : "Live"}
+                                {error ? "Ngoại tuyến" : "Trực tiếp"}
                             </span>
                         </div>
                         <p className="text-gray-500 font-medium">
@@ -298,7 +298,7 @@ export default function HistoryPage() {
                         {/* Weekly Average */}
                         <div className="bg-white rounded-3xl p-8 shadow-sm border border-gray-100">
                             <h3 className="text-gray-400 text-xs font-bold uppercase tracking-widest mb-3">
-                                {period === "week" ? "Weekly" : period === "month" ? "Monthly" : period === "year" ? "Yearly" : "Daily"} Average
+                                {period === "week" ? "Trung bình tuần" : period === "month" ? "Trung bình tháng" : period === "year" ? "Trung bình năm" : "Trung bình ngày"}
                             </h3>
                             {loading || !summary
                                 ? <Skeleton className="h-10 w-32 mb-4" />
@@ -307,7 +307,7 @@ export default function HistoryPage() {
                                         <span className="text-4xl font-black text-[#1c6b42]">
                                             {summary.weekly_avg.toLocaleString()}
                                         </span>
-                                        <span className="text-gray-500 font-medium pb-1">kcal / day</span>
+                                        <span className="text-gray-500 font-medium pb-1">kcal / ngày</span>
                                     </div>
                                     <div className={`text-sm font-bold flex items-center gap-1.5 ${summary.direction === "lower" ? "text-[#1c6b42]" :
                                         summary.direction === "higher" ? "text-red-500" : "text-gray-400"

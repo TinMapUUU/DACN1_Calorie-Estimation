@@ -75,11 +75,11 @@ export default function RegisterPage() {
 
                     <div>
                         <h1 className="text-5xl font-extrabold leading-tight mb-6">
-                            Grow your <br />
-                            <span className="text-green-700">wellbeing</span>
+                            Nâng cao <br />
+                            <span className="text-green-700">sức khỏe</span>
                         </h1>
                         <p className="text-gray-600 text-lg">
-                            Join the digital greenhouse. Track your health and grow better mỗi ngày.
+                            Tham gia nhà kính kỹ thuật số. Theo dõi sức khỏe và phát triển tốt hơn mỗi ngày.
                         </p>
                     </div>
                 </div>
@@ -89,9 +89,9 @@ export default function RegisterPage() {
             <div className="w-full md:w-1/2 flex items-center justify-center p-6 sm:p-12 lg:p-24">
                 <div className="w-full max-w-[400px]">
 
-                    <h2 className="text-2xl font-bold mb-2">Create an account</h2>
+                    <h2 className="text-2xl font-bold mb-2">Tạo tài khoản</h2>
                     <p className="text-gray-500 mb-8">
-                        Begin your journey to a healthier you.
+                        Bắt đầu hành trình sống khỏe của bạn.
                     </p>
 
                     <form className="space-y-6" onSubmit={handleSubmit}>
@@ -112,7 +112,7 @@ export default function RegisterPage() {
                                 required
                                 value={fullName}
                                 onChange={(e) => setFullName(e.target.value)}
-                                placeholder="Enter your full name"
+                                placeholder="Nhập họ và tên của bạn"
                                 className="w-full px-4 py-3 rounded-full bg-gray-100 focus:ring-2 focus:ring-green-300 outline-none"
                             />
                         </div>
@@ -178,7 +178,7 @@ export default function RegisterPage() {
                                 required
                                 value={email}
                                 onChange={(e) => setEmail(e.target.value)}
-                                placeholder="you@example.com"
+                                placeholder="ban@vidu.com"
                                 className="w-full px-4 py-3 rounded-full bg-gray-100 focus:ring-2 focus:ring-green-300 outline-none"
                             />
                         </div>
@@ -186,7 +186,7 @@ export default function RegisterPage() {
                         {/* PASSWORD */}
                         <div>
                             <label className="block mb-2 text-sm text-gray-500">
-                                Password
+                                Mật khẩu
                             </label>
                             <div className="relative">
                                 <input
@@ -194,7 +194,7 @@ export default function RegisterPage() {
                                     required
                                     value={password}
                                     onChange={(e) => setPassword(e.target.value)}
-                                    placeholder="Create a password"
+                                    placeholder="Tạo mật khẩu"
                                     className="w-full px-4 py-3 rounded-full bg-gray-100 focus:ring-2 focus:ring-green-300 outline-none"
                                 />
                                 <button
@@ -206,7 +206,7 @@ export default function RegisterPage() {
                                 </button>
                             </div>
                             <p className="text-xs text-gray-400 mt-2">
-                                Must be at least 8 characters.
+                                Phải có ít nhất 8 ký tự.
                             </p>
                         </div>
 
@@ -216,13 +216,13 @@ export default function RegisterPage() {
                             disabled={loading}
                             className="w-full bg-green-700 text-white py-3 rounded-full font-bold hover:opacity-90 active:scale-[0.98] transition flex justify-center items-center gap-2"
                         >
-                            {loading ? 'Đang đăng ký...' : 'Register →'}
+                            {loading ? 'Đang đăng ký...' : 'Đăng ký →'}
                         </button>
                     </form>
 
                     {/* LOGIN */}
                     <div className="mt-8 text-center text-gray-500">
-                        Already have an account?{' '}
+                        Đã có tài khoản?{' '}
                         <Link href="/login" className="text-green-700 font-semibold hover:underline">
                             Đăng nhập
                         </Link>

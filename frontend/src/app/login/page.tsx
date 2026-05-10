@@ -40,20 +40,20 @@ export default function LoginPage() {
     return (
         <div className="min-h-screen flex items-center justify-center bg-[#F8F9FA]">
             <div className="bg-white p-10 rounded-[40px] shadow-xl w-full max-w-md text-center border border-gray-100">
-                <h2 className="text-3xl font-bold mb-2">Welcome Back</h2>
-                <p className="text-gray-400 mb-8">Please enter your details to continue.</p>
+                <h2 className="text-3xl font-bold mb-2">Chào mừng trở lại</h2>
+                <p className="text-gray-400 mb-8">Vui lòng nhập thông tin của bạn để tiếp tục.</p>
 
                 <form onSubmit={handleSubmit} className="flex flex-col gap-4">
                     <input
                         type="email"
-                        placeholder="Email address"
+                        placeholder="Địa chỉ Email"
                         className="w-full p-4 bg-gray-50 rounded-2xl border-none outline-green-500"
                         onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                         required
                     />
                     <input
                         type="password"
-                        placeholder="Password"
+                        placeholder="Mật khẩu"
                         className="w-full p-4 bg-gray-50 rounded-2xl border-none outline-green-500"
                         onChange={(e) => setFormData({ ...formData, password: e.target.value })}
                         required
@@ -63,18 +63,18 @@ export default function LoginPage() {
                         type="submit"
                         className="w-full py-4 bg-[#10B981] text-white font-bold rounded-full hover:bg-green-600 transition-all mt-4"
                     >
-                        Sign In
+                        Đăng nhập
                     </button>
                 </form>
 
                 <div className="mt-8 text-sm text-gray-500">
-                    Don't have an account?{' '}
+                    Chưa có tài khoản?{' '}
                     {/* SỬA LẠI ĐOẠN NÀY: Dùng thẻ Link của Next.js */}
                     <Link
                         href={`/register?redirect=${redirectPath}`}
                         className="text-green-600 font-bold hover:underline"
                     >
-                        Create Account
+                        Tạo tài khoản
                     </Link>
                 </div>
             </div>

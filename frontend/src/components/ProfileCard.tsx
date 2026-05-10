@@ -11,8 +11,8 @@ export default function ProfileCard({ name, id, joinDate }: ProfileCardProps) {
     return (
         <div className="bg-white p-8 rounded-xl shadow flex items-center gap-6">
             <img
-                src="https://placehold.co/400x400/e6efeb/1c6b42?text=Avatar"
-                alt="Profile Avatar"
+                src="https://placehold.co/400x400/e6efeb/1c6b42?text=Anh+Dai+Dien"
+                alt="Ảnh đại diện"
                 className="w-24 h-24 rounded-full object-cover"
             />
 
@@ -25,7 +25,7 @@ export default function ProfileCard({ name, id, joinDate }: ProfileCardProps) {
                         PRO
                     </span>
                     <span className="px-3 py-1 bg-gray-200 text-gray-600 text-xs rounded-full font-medium">
-                        Joined {joinDate}
+                        Tham gia {joinDate}
                     </span>
                 </div>
             </div>
