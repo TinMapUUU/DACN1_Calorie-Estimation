@@ -5,10 +5,23 @@ from sqlmodel import Session, select, func
 from datetime import datetime, date, timedelta
 from typing import Optional
 from collections import defaultdict
+from pydantic import BaseModel
 
 # Import từ project của bạn
 from models.db_models import MealLog, UserProfile, User, MealType
 from database.connection import get_session
+
+# ─── Request Models ───────────────────────────────────────
+class UpdateMealRequest(BaseModel):
+    food_name: Optional[str] = None
+    calories: Optional[float] = None
+    scanned_at: Optional[datetime] = None  # Thời gian bữa ăn
+    rating: Optional[int] = None  # Đánh giá 1-5 sao
+    notes: Optional[str] = None  # Ghi chú
+    
+    class Config:
+        # Để exclude_unset hoạt động đúng
+        validate_default = True
 
 router = APIRouter(prefix="/api/history", tags=["history"])
 
@@ -169,10 +182,53 @@ def get_logs(
         cal = float(log.calories or 0)
         groups[mt]["total"] = round(groups[mt]["total"] + cal, 1)
         groups[mt]["items"].append({
+            "id": log.id,
             "name": log.food_name or "Unknown",
             "cal":  round(cal, 0),
+            "image_url": log.image_url,
+            "scanned_at": log.scanned_at.isoformat() if log.scanned_at else None,
+            "rating": log.rating,
+            "notes": log.notes,
         })
 
     # Xử lý an toàn cho sắp xếp
     order = ["breakfast", "lunch", "dinner", "snack"]
     return [groups[k] for k in order if k in groups]
+
+
+# ─── 5. Update meal (PUT) ─────────────────────────────────
+@router.put("/logs/{log_id}")
+def update_meal(
+    log_id: int,
+    request: UpdateMealRequest,
+    session: Session = Depends(get_session),
+):
+    """Cập nhật thông tin món ăn (tên, calo, thời gian, đánh giá, ghi chú)
+    
+    Chỉ update những trường được explicitly gửi (exclude_unset=True)
+    """
+    log = session.get(MealLog, log_id)
+    if not log:
+        raise HTTPException(status_code=404, detail="Meal not found")
+    
+    # Chỉ lấy những trường được explicitly set trong request
+    update_data = request.dict(exclude_unset=True)
+    
+    # Update từng trường
+    for key, value in update_data.items():
+        if hasattr(log, key):
+            setattr(log, key, value)
+    
+    session.add(log)
+    session.commit()
+    session.refresh(log)
+    
+    return {
+        "id": log.id,
+        "food_name": log.food_name,
+        "calories": log.calories,
+        "scanned_at": log.scanned_at.isoformat() if log.scanned_at else None,
+        "rating": log.rating,
+        "notes": log.notes,
+        "message": "Cập nhật thành công"
+    }

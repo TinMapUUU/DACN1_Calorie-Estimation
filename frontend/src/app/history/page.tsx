@@ -17,7 +17,7 @@ type ChartPoint = { date: string; label: string; consumed: number };
 type Summary = { weekly_avg: number; change_pct: number; direction: string; daily_goal: number };
 type MacroItem = { current: number; target: number };
 type Macros = { protein: MacroItem; carbs: MacroItem; fat: MacroItem };
-type MealItem = { name: string; cal: number };
+type MealItem = { id: number; name: string; cal: number; image_url?: string; scanned_at?: string; rating?: number; notes?: string };
 type MealLog = { type: string; icon: string; time: string; total: number; items: MealItem[] };
 
 // ─── Fetch helper ────────────────────────────────────────
@@ -128,6 +128,16 @@ export default function HistoryPage() {
     const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
     const [liveIndicator, setLiveIndicator] = useState(false);
 
+    // ─── States cho Modal Edit ────────────────────────────
+    const [editingItem, setEditingItem] = useState<MealItem | null>(null);
+    const [editName, setEditName] = useState("");
+    const [editCal, setEditCal] = useState("");
+    const [editDate, setEditDate] = useState("");
+    const [editTime, setEditTime] = useState("");
+    const [editRating, setEditRating] = useState(0);
+    const [editNotes, setEditNotes] = useState("");
+    const [isSaving, setIsSaving] = useState(false);
+
     const prevChartRef = useRef<string>("");
 
     const fetchAll = useCallback(async (showLoading = false) => {
@@ -148,6 +158,12 @@ export default function HistoryPage() {
             }
             prevChartRef.current = newChartStr;
 
+            // Debug log
+            console.log("Logs data:", logsData);
+            logsData.forEach(log => {
+                console.log(`${log.type}:`, log.items.map(item => ({ name: item.name, cal: item.cal })));
+            });
+
             setChart(chartData);
             setSummary(summaryData);
             setMacros(macrosData);
@@ -165,6 +181,94 @@ export default function HistoryPage() {
         const interval = setInterval(() => fetchAll(false), POLL_MS);
         return () => clearInterval(interval);
     }, [fetchAll]);
+
+    // ─── Hàm Edit Modal ──────────────────────────────────
+    const openEditModal = (item: MealItem) => {
+        setEditingItem(item);
+        setEditName(item.name);
+        setEditCal(item.cal.toString());
+        
+        // Parse thời gian - chuẩn xử lý ISO string
+        if (item.scanned_at) {
+            const dt = new Date(item.scanned_at);
+            // Lấy ngày từ UTC
+            const dateStr = dt.toISOString().split('T')[0]; // YYYY-MM-DD (UTC)
+            // Lấy giờ từ UTC
+            const timeStr = dt.toISOString().split('T')[1]?.slice(0, 5) || '00:00'; // HH:MM (UTC)
+            setEditDate(dateStr);
+            setEditTime(timeStr);
+        } else {
+            // Nếu không có thời gian, dùng hiện tại (UTC)
+            const now = new Date();
+            setEditDate(now.toISOString().split('T')[0]);
+            setEditTime(now.toISOString().split('T')[1]?.slice(0, 5) || '00:00');
+        }
+        
+        setEditRating(item.rating || 0);
+        setEditNotes(item.notes || "");
+    };
+
+    const closeEditModal = () => {
+        setEditingItem(null);
+        setEditName("");
+        setEditCal("");
+        setEditDate("");
+        setEditTime("");
+        setEditRating(0);
+        setEditNotes("");
+    };
+
+    const handleSaveEdit = async () => {
+        if (!editingItem) return;
+        
+        setIsSaving(true);
+        try {
+            // Combine date và time thành datetime ISO string
+            const dateTimeStr = editDate && editTime 
+                ? new Date(`${editDate}T${editTime}:00`).toISOString()
+                : undefined;
+            
+            const requestBody: any = {};
+            
+            // LUÔN gửi name và calories để không mất dữ liệu
+            if (editName && editName.trim()) {
+                requestBody.food_name = editName.trim();
+            }
+            if (editCal && !isNaN(parseFloat(editCal))) {
+                requestBody.calories = parseFloat(editCal);
+            }
+            if (dateTimeStr) {
+                requestBody.scanned_at = dateTimeStr;
+            }
+            
+            // Gửi rating nếu thay đổi
+            if (editRating !== (editingItem.rating || 0)) {
+                requestBody.rating = editRating > 0 ? editRating : null;
+            }
+            
+            // Gửi notes nếu thay đổi
+            if (editNotes.trim() !== (editingItem.notes || "").trim()) {
+                requestBody.notes = editNotes.trim() || null;
+            }
+            
+            const res = await fetch(`${API_BASE}/api/history/logs/${editingItem.id}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(requestBody)
+            });
+
+            if (!res.ok) throw new Error(`API error ${res.status}`);
+            
+            // Cập nhật thành công -> Đóng popup & Fetch lại dữ liệu
+            closeEditModal();
+            fetchAll(false);
+        } catch (e) {
+            console.error("Lỗi cập nhật:", e);
+            alert("Không thể cập nhật. Vui lòng thử lại.");
+        } finally {
+            setIsSaving(false);
+        }
+    };
 
     // ─── LOGIC TÍNH TOÁN DYNAMIC GOAL (MỚI CẬP NHẬT) ──────────
     const dailyGoal = summary?.daily_goal ?? 2000;
@@ -390,18 +494,100 @@ export default function HistoryPage() {
 
                                     {/* Meal items */}
                                     <div className="space-y-3">
-                                        {log.items.map((item, i) => (
-                                            <MealLogItem
-                                                key={i}
-                                                time={log.time}
-                                                name={item.name}
-                                                calories={item.cal}
-                                                protein={Math.round(item.cal * 0.25 / 4)} // Estimation: 25% of cals from protein
-                                                carbs={Math.round(item.cal * 0.50 / 4)} // Estimation: 50% of cals from carbs
-                                                fat={Math.round(item.cal * 0.25 / 9)} // Estimation: 25% of cals from fat
-                                                icon={log.icon}
-                                            />
-                                        ))}
+                                        {log.items && log.items.length > 0 ? (
+                                            log.items.map((item, i) => (
+                                                <div 
+                                                    key={i}
+                                                    className="flex items-center justify-between p-4 bg-white rounded-2xl border border-gray-100 hover:shadow-md transition-shadow group"
+                                                >
+                                                    <div className="flex items-center gap-3 flex-1 min-w-0">
+                                                        {/* Icon hoặc Ảnh */}
+                                                        <div className="w-12 h-12 bg-orange-50 rounded-full flex items-center justify-center flex-shrink-0 overflow-hidden">
+                                                            {item.image_url ? (
+                                                                <img 
+                                                                    src={item.image_url} 
+                                                                    alt={item.name} 
+                                                                    className="w-full h-full object-cover"
+                                                                    onError={(e) => {
+                                                                        const img = e.target as HTMLImageElement;
+                                                                        img.style.display = 'none';
+                                                                    }}
+                                                                />
+                                                            ) : (
+                                                                <span className="text-xl">{log.icon}</span>
+                                                            )}
+                                                        </div>
+                                                        
+                                                        {/* Thông tin món ăn */}
+                                                        <div className="min-w-0 flex-1">
+                                                            <h4 className="text-gray-900 font-bold text-base truncate">{item.name || "Unknown"}</h4>
+                                                            <div className="flex items-center gap-2 mt-2 flex-wrap">
+                                                                <span className="inline-flex items-center gap-1 bg-red-50 text-red-700 px-2 py-1 rounded text-xs font-bold">
+                                                                    <span className="w-2 h-2 rounded-full bg-red-500"></span>P: {Math.round((item.cal || 0) * 0.25 / 4)}g
+                                                                </span>
+                                                                <span className="inline-flex items-center gap-1 bg-blue-50 text-blue-700 px-2 py-1 rounded text-xs font-bold">
+                                                                    <span className="w-2 h-2 rounded-full bg-blue-500"></span>C: {Math.round((item.cal || 0) * 0.50 / 4)}g
+                                                                </span>
+                                                                <span className="inline-flex items-center gap-1 bg-yellow-50 text-yellow-700 px-2 py-1 rounded text-xs font-bold">
+                                                                    <span className="w-2 h-2 rounded-full bg-yellow-500"></span>F: {Math.round((item.cal || 0) * 0.25 / 9)}g
+                                                                </span>
+                                                            </div>
+
+                                                            {/* Rating & Notes */}
+                                                            <div className="mt-3 pt-3 border-t border-gray-100 flex flex-col gap-2 w-full">
+                                                                {/* Rating */}
+                                                                <div className="flex items-center gap-1">
+                                                                    <span className="text-xs text-gray-500 font-medium min-w-fit">Đánh giá:</span>
+                                                                    <div className="flex items-center gap-0.5">
+                                                                        {[...Array(5)].map((_, i) => (
+                                                                            <span 
+                                                                                key={i}
+                                                                                className={`text-sm ${(item.rating && i < item.rating) ? 'text-yellow-400' : 'text-gray-300'}`}
+                                                                            >
+                                                                                ★
+                                                                            </span>
+                                                                        ))}
+                                                                    </div>
+                                                                    {!item.rating && <span className="text-xs text-gray-400 italic">Chưa có</span>}
+                                                                </div>
+                                                                
+                                                                {/* Notes */}
+                                                                <div className="flex items-start gap-2">
+                                                                    <span className="text-xs text-gray-500 font-medium">Ghi chú:</span>
+                                                                    <div className="text-xs text-gray-600 italic truncate flex-1" title={item.notes || "Chưa có ghi chú"}>
+                                                                        {item.notes ? `💬 ${item.notes}` : <span className="text-gray-400">Chưa có</span>}
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    
+                                                    {/* Calo và Nút Edit */}
+                                                    <div className="flex items-center gap-3 flex-shrink-0 ml-4">
+                                                        <div className="text-right">
+                                                            <div className="flex flex-col items-end">
+                                                                <span className="text-2xl font-extrabold text-[#1c6b42]">{item.cal || 0}</span>
+                                                                <span className="text-xs text-gray-500">kcal</span>
+                                                            </div>
+                                                            <span className="text-xs text-gray-400 mt-1 block">{log.time}</span>
+                                                        </div>
+                                                        
+                                                        {/* Nút Edit */}
+                                                        <button 
+                                                            onClick={() => openEditModal(item)}
+                                                            className="p-2 text-gray-400 hover:text-blue-500 hover:bg-blue-50 rounded-full transition-colors opacity-0 group-hover:opacity-100 md:opacity-100"
+                                                            title="Chỉnh sửa"
+                                                        >
+                                                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                                                            </svg>
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            ))
+                                        ) : (
+                                            <div className="text-center py-4 text-gray-400">Không có món ăn</div>
+                                        )}
                                     </div>
                                 </div>
                             ))}
@@ -410,6 +596,117 @@ export default function HistoryPage() {
                 </div>
 
             </main>
+
+            {/* MODAL CHỈNH SỬA MÓN ĂN */}
+            {editingItem && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
+                    <div className="bg-white rounded-3xl p-6 w-full max-w-md shadow-xl mx-4 max-h-[90vh] overflow-y-auto">
+                        <h3 className="text-xl font-bold text-gray-900 mb-4">Chỉnh sửa món ăn</h3>
+                        
+                        <div className="space-y-4">
+                            {/* Tên món */}
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">Tên món ăn</label>
+                                <input 
+                                    type="text" 
+                                    value={editName}
+                                    onChange={(e) => setEditName(e.target.value)}
+                                    className="w-full border border-gray-300 rounded-xl px-4 py-2 focus:ring-2 focus:ring-[#1c6b42] focus:border-transparent outline-none transition"
+                                    disabled={isSaving}
+                                />
+                            </div>
+
+                            {/* Calo */}
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">Calo (kcal)</label>
+                                <input 
+                                    type="number" 
+                                    value={editCal}
+                                    onChange={(e) => setEditCal(e.target.value)}
+                                    step="0.1"
+                                    className="w-full border border-gray-300 rounded-xl px-4 py-2 focus:ring-2 focus:ring-[#1c6b42] focus:border-transparent outline-none transition"
+                                    disabled={isSaving}
+                                />
+                            </div>
+
+                            {/* Ngày */}
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">Ngày</label>
+                                <input 
+                                    type="date" 
+                                    value={editDate}
+                                    onChange={(e) => setEditDate(e.target.value)}
+                                    className="w-full border border-gray-300 rounded-xl px-4 py-2 focus:ring-2 focus:ring-[#1c6b42] focus:border-transparent outline-none transition"
+                                    disabled={isSaving}
+                                />
+                            </div>
+
+                            {/* Giờ */}
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">Giờ</label>
+                                <input 
+                                    type="time" 
+                                    value={editTime}
+                                    onChange={(e) => setEditTime(e.target.value)}
+                                    className="w-full border border-gray-300 rounded-xl px-4 py-2 focus:ring-2 focus:ring-[#1c6b42] focus:border-transparent outline-none transition"
+                                    disabled={isSaving}
+                                />
+                            </div>
+
+                            {/* Đánh giá sao */}
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">Đánh giá</label>
+                                <div className="flex gap-2">
+                                    {[1, 2, 3, 4, 5].map((star) => (
+                                        <button
+                                            key={star}
+                                            onClick={() => setEditRating(star)}
+                                            disabled={isSaving}
+                                            className={`text-2xl transition ${
+                                                editRating >= star 
+                                                    ? 'text-yellow-400' 
+                                                    : 'text-gray-300 hover:text-yellow-200'
+                                            }`}
+                                        >
+                                            ★
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+
+                            {/* Ghi chú */}
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">Ghi chú</label>
+                                <textarea 
+                                    value={editNotes}
+                                    onChange={(e) => setEditNotes(e.target.value)}
+                                    placeholder="Thêm ghi chú về bữa ăn này..."
+                                    rows={3}
+                                    className="w-full border border-gray-300 rounded-xl px-4 py-2 focus:ring-2 focus:ring-[#1c6b42] focus:border-transparent outline-none transition resize-none"
+                                    disabled={isSaving}
+                                />
+                            </div>
+                        </div>
+
+                        <div className="flex gap-3 mt-6">
+                            <button 
+                                onClick={closeEditModal}
+                                className="flex-1 py-2 rounded-xl border border-gray-300 text-gray-700 font-medium hover:bg-gray-50 transition disabled:opacity-50"
+                                disabled={isSaving}
+                            >
+                                Hủy
+                            </button>
+                            <button 
+                                onClick={handleSaveEdit}
+                                className="flex-1 py-2 rounded-xl bg-[#1c6b42] text-white font-medium hover:bg-[#155232] transition disabled:opacity-50"
+                                disabled={isSaving}
+                            >
+                                {isSaving ? "Đang lưu..." : "Lưu"}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

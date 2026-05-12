@@ -72,5 +72,7 @@ class MealLog(SQLModel, table=True):
     fat_g: float = 0
     meal_type: MealType
     scanned_at: datetime = Field(default_factory=datetime.now)
-    
+    image_url: Optional[str] = Field(default=None)
+    rating: Optional[int] = Field(default=None, ge=1, le=5)  # Đánh giá 1-5 sao
+    notes: Optional[str] = Field(default=None)  # Ghi chú bữa ăn
     user: User = Relationship(back_populates="meals")
