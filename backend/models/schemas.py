@@ -38,3 +38,8 @@ class Token(BaseModel):
     full_name: Optional[str] = None
     birth_year: int
     gender: Gender
+
+# Màng lọc cho Chat AI
+class ChatRequest(BaseModel):
+    user_id: int
+    message: str

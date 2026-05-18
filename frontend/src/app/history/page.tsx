@@ -259,9 +259,9 @@ export default function HistoryPage() {
 
             if (!res.ok) throw new Error(`API error ${res.status}`);
             
-            // Cập nhật thành công -> Đóng popup & Fetch lại dữ liệu
+            // Cập nhật thành công -> Fetch lại dữ liệu TRƯỚC khi đóng modal
+            await fetchAll(false);
             closeEditModal();
-            fetchAll(false);
         } catch (e) {
             console.error("Lỗi cập nhật:", e);
             alert("Không thể cập nhật. Vui lòng thử lại.");

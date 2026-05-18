@@ -1,13 +1,32 @@
 # fastapi core
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
+from contextlib import asynccontextmanager
+import os
 
 # module nội bộ
 from database.connection import create_db_and_tables
-# 1. THÊM Ở ĐÂY: import thêm history_api
-from routers import auth, bmi, scanner, history_api 
+from routers import auth, bmi, scanner, history_api, chat
 
-app = FastAPI(title="Greenhouse API")
+# Cấu hình thư mục upload
+UPLOAD_DIR = "uploads"
+
+# Tạo thư mục upload ngay khi module load (trước khi mount)
+os.makedirs(UPLOAD_DIR, exist_ok=True)
+
+# Khởi tạo DB khi chạy
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Startup
+    create_db_and_tables()
+    print("✅ Database ready!")
+    print(f"📁 Upload directory ready: {UPLOAD_DIR}")
+    yield
+    # Shutdown
+    print("👋 Shutting down...")
+
+app = FastAPI(title="Greenhouse API", lifespan=lifespan)
 
 # Cấu hình CORS
 app.add_middleware(
@@ -18,20 +37,18 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Khởi tạo DB khi chạy
-@app.on_event("startup")
-def on_startup():
-    create_db_and_tables()
-    print("✅ Database ready!")
+# Mount thư mục static để frontend có thể truy cập ảnh
+# Ví dụ: http://127.0.0.1:8000/uploads/ten-anh.jpg
+app.mount("/uploads", StaticFiles(directory=UPLOAD_DIR), name="uploads")
 
-# Nhúng các Router
+# Đăng ký các router
 app.include_router(auth.router)
 app.include_router(bmi.router, prefix="/api/v1", tags=["Profile & BMI"])
 app.include_router(scanner.router, prefix="/api/v1", tags=["AI Scanner"])
-
-# 2. THÊM Ở ĐÂY: Đăng ký history_api vào FastAPI
 app.include_router(history_api.router)
+app.include_router(chat.router)
 
 @app.get("/")
 def root():
     return {"message": "Greenhouse API is running 🚀"}
+

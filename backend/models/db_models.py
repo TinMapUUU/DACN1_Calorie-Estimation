@@ -64,15 +64,27 @@ class UserProfile(SQLModel, table=True):
 
 class MealLog(SQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
-    user_id: int = Field(foreign_key="user.id")
-    food_name: str
+    user_id: int = Field(foreign_key="user.id", index=True)
+    
+    # Thông tin thức ăn
+    food_name: str = Field(index=True)
     calories: float
     protein_g: float = 0
     carbs_g: float = 0
     fat_g: float = 0
-    meal_type: MealType
-    scanned_at: datetime = Field(default_factory=datetime.now)
-    image_url: Optional[str] = Field(default=None)
+    meal_type: MealType = Field(index=True)
+    
+    # Timestamp
+    scanned_at: datetime = Field(default_factory=datetime.now, index=True)
+    
+    # Ảnh - được upload từ /api/v1/scan
+    image_url: Optional[str] = Field(default=None, max_length=500, index=True)
+    image_uploaded_at: Optional[datetime] = Field(default=None)  # Khi nào ảnh được upload
+    original_filename: Optional[str] = Field(default=None, max_length=255)  # Tên file gốc của user
+    
+    # Đánh giá & Ghi chú
     rating: Optional[int] = Field(default=None, ge=1, le=5)  # Đánh giá 1-5 sao
-    notes: Optional[str] = Field(default=None)  # Ghi chú bữa ăn
+    notes: Optional[str] = Field(default=None, max_length=500)  # Ghi chú bữa ăn
+    
+    # Quan hệ
     user: User = Relationship(back_populates="meals")

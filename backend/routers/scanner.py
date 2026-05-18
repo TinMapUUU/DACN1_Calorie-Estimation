@@ -5,6 +5,8 @@ from datetime import datetime
 import io
 import os
 import logging
+import shutil
+import uuid
 
 import torch
 import torch.nn as nn
@@ -399,6 +401,8 @@ class ConfirmRequest(BaseModel):
     portion_unit: str | None = None  # Tên đơn vị (VD: "1 dĩa bình thường")
     custom_gram: float | None = None  # Gram tự nhập (ưu tiên hơn portion_unit)
     meal_type: MealType = MealType.snack
+    image_url: str | None = None  # URL ảnh từ /uploads/...
+    original_filename: str | None = None  # Tên file gốc
 
 
 # ===================== API 1: ANALYZE (không lưu DB) =====================
@@ -483,6 +487,9 @@ async def confirm_meal(
         carbs_g=nutrition["carbs_g"],
         fat_g=nutrition["fat_g"],
         meal_type=body.meal_type,
+        image_url=body.image_url,
+        image_uploaded_at=datetime.now() if body.image_url else None,
+        original_filename=body.original_filename,
     )
     session.add(new_meal)
     session.commit()
@@ -500,3 +507,47 @@ async def confirm_meal(
         "meal_type": new_meal.meal_type,
         "calculation_method": method,
     }
+
+
+# ===================== API 3: UPLOAD (lưu file ảnh) =====================
+@router.post("/scan")
+async def scan_food(
+    file: UploadFile = File(...),
+    current_user: User = Depends(get_current_user)
+):
+    """
+    Upload ảnh thực phẩm → lưu file → trả về đường dẫn để frontend truy cập.
+    """
+    # Kiểm tra loại file
+    if not file.content_type.startswith("image/"):
+        raise HTTPException(status_code=400, detail="File không hợp lệ. Vui lòng upload ảnh!")
+
+    try:
+        # Tạo tên file ngẫu nhiên để tránh trùng lặp
+        file_extension = file.filename.split(".")[-1].lower()
+        allowed_extensions = {"jpg", "jpeg", "png", "gif", "webp"}
+        
+        if file_extension not in allowed_extensions:
+            raise HTTPException(status_code=400, detail=f"Định dạng ảnh không được hỗ trợ. Hỗ trợ: {allowed_extensions}")
+        
+        new_filename = f"{uuid.uuid4()}.{file_extension}"
+        file_path = os.path.join("uploads", new_filename)
+        
+        # Lưu file vào thư mục uploads/
+        with open(file_path, "wb") as buffer:
+            shutil.copyfileobj(file.file, buffer)
+        
+        logger.info(f"✅ Lưu ảnh: {new_filename} (user: {current_user.id})")
+        
+        # Đường dẫn để frontend truy cập
+        image_url = f"/uploads/{new_filename}"
+        
+        return {
+            "message": "Upload ảnh thành công!",
+            "image_url": image_url,
+            "filename": new_filename,
+            "original_filename": file.filename  # Tên file gốc từ user
+        }
+    except Exception as e:
+        logger.error(f"❌ Lỗi upload: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Lỗi upload: {str(e)}")

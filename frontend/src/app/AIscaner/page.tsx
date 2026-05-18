@@ -260,6 +260,11 @@ export default function AiScannerPage() {
   );
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [isConfirming, setIsConfirming] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
+
+  // Ảnh được upload
+  const [uploadedImageUrl, setUploadedImageUrl] = useState<string | null>(null);
+  const [uploadedOriginalFilename, setUploadedOriginalFilename] = useState<string | null>(null);
 
   // Kết quả từ analyze
   const [analyzeResult, setAnalyzeResult] = useState<AnalyzeResult | null>(null);
@@ -293,6 +298,40 @@ export default function AiScannerPage() {
     fileInputRef.current?.click();
   };
 
+  // ===================== BƯỚC 0: UPLOAD ẢNH =====================
+  const handleUploadAndScan = async (file: File) => {
+    const token = localStorage.getItem('access_token');
+    if (!token) return;
+
+    setIsUploading(true);
+    const formData = new FormData();
+    formData.append('file', file);
+
+    try {
+      const uploadRes = await fetch('http://127.0.0.1:8000/api/v1/scan', {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}` },
+        body: formData,
+      });
+
+      if (!uploadRes.ok) {
+        const err = await uploadRes.json();
+        throw new Error(err.detail || 'Lỗi upload ảnh');
+      }
+
+      const uploadData = await uploadRes.json();
+      setUploadedImageUrl(uploadData.image_url);
+      setUploadedOriginalFilename(uploadData.original_filename);
+
+      return uploadData;
+    } catch (error: any) {
+      setErrorMsg(error.message || 'Lỗi upload ảnh');
+      throw error;
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
   // ===================== BƯỚC 1: ANALYZE =====================
   const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -308,10 +347,14 @@ export default function AiScannerPage() {
     setErrorMsg(null);
     setShowModal(false);
 
-    const formData = new FormData();
-    formData.append('file', file);
-
     try {
+      // BƯỚC 0: Upload ảnh trước
+      await handleUploadAndScan(file);
+
+      // BƯỚC 1: Sau đó gọi analyze
+      const formData = new FormData();
+      formData.append('file', file);
+
       const response = await fetch('http://127.0.0.1:8000/api/v1/vision/analyze', {
         method: 'POST',
         headers: { Authorization: `Bearer ${token}` },
@@ -354,6 +397,8 @@ export default function AiScannerPage() {
           portion_unit: portionUnit,
           custom_gram: customGram,
           meal_type: mealType,
+          image_url: uploadedImageUrl,
+          original_filename: uploadedOriginalFilename,
         }),
       });
 
