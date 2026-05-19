@@ -218,6 +218,8 @@ export default function HistoryPage() {
         setEditNotes("");
     };
 
+
+
     const handleSaveEdit = async () => {
         if (!editingItem) return;
         
@@ -259,9 +261,9 @@ export default function HistoryPage() {
 
             if (!res.ok) throw new Error(`API error ${res.status}`);
             
-            // Cập nhật thành công -> Fetch lại dữ liệu TRƯỚC khi đóng modal
-            await fetchAll(false);
+            // Cập nhật thành công -> Đóng popup & Fetch lại dữ liệu
             closeEditModal();
+            fetchAll(false);
         } catch (e) {
             console.error("Lỗi cập nhật:", e);
             alert("Không thể cập nhật. Vui lòng thử lại.");
@@ -505,7 +507,7 @@ export default function HistoryPage() {
                                                         <div className="w-12 h-12 bg-orange-50 rounded-full flex items-center justify-center flex-shrink-0 overflow-hidden">
                                                             {item.image_url ? (
                                                                 <img 
-                                                                    src={item.image_url} 
+                                                                    src={`${API_BASE}${item.image_url}`}
                                                                     alt={item.name} 
                                                                     className="w-full h-full object-cover"
                                                                     onError={(e) => {
