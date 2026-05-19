@@ -47,8 +47,8 @@ app.include_router(bmi.router, prefix="/api/v1", tags=["Profile & BMI"])
 app.include_router(scanner.router, prefix="/api/v1", tags=["AI Scanner"])
 app.include_router(history_api.router)
 app.include_router(chat.router)
-
 @app.get("/")
 def root():
     return {"message": "Greenhouse API is running 🚀"}
+
 
