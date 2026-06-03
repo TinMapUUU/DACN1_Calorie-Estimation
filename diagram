@@ -1,0 +1,273 @@
+PlantUML:Use Case Diagram tổng thể
+@startuml
+left to right direction
+actor User
+
+rectangle "Greenhouse App" {
+  (Register)
+  (Login)
+  (Scan Food)
+  (Analyze Food)
+  (Confirm Meal)
+  (Update BMI / Goal)
+  (View Dashboard / History)
+  (Chat with AI)
+}
+
+User --> (Register)
+User --> (Login)
+User --> (Scan Food)
+User --> (Analyze Food)
+User --> (Confirm Meal)
+User --> (Update BMI / Goal)
+User --> (View Dashboard / History)
+User --> (Chat with AI)
+@enduml
+
+Activity Diagram: đăng ký
+@startuml
+start
+:Open register page;
+:Enter email/phone/password/full_name/gender/birth_year;
+if (Valid input?) then (yes)
+  :POST /api/v1/register;
+  if (Email or phone exists?) then (yes)
+    :Show error;
+    stop
+  else (no)
+    :Save user to DB;
+    :Return success;
+    stop
+  endif
+else (no)
+  :Show validation error;
+  stop
+endif
+@enduml
+
+Activity Diagram: đăng nhập
+@startuml
+start
+:Open login page;
+:Enter email and password;
+:POST /api/v1/login;
+if (Credentials valid?) then (yes)
+  :Create JWT token;
+  :Return access token;
+  :Store token in browser;
+  stop
+else (no)
+  :Show login error;
+  stop
+endif
+@enduml
+
+Activity Diagram: scan ảnh → phân tích → xác nhận khẩu phần
+@startuml
+start
+:Open AI scanner page;
+:Upload food image;
+:POST /api/v1/scan;
+:Save file and return image_url;
+:POST /api/v1/vision/analyze;
+:AI model predict food;
+:Return food_name + options;
+:User choose portion or custom gram;
+:POST /api/v1/vision/confirm;
+:Calculate nutrition;
+:Save MealLog;
+stop
+@enduml
+
+Activity Diagram: cập nhật BMI / profile / mục tiêu
+@startuml
+start
+:Open BMI/profile page;
+:Enter weight, height, goal type;
+if (Goal not maintain?) then (yes)
+  :Enter target weight and duration;
+endif
+:POST /api/v1/profile/bmi;
+:Calculate BMI;
+:Calculate daily calorie goal;
+:Save or update UserProfile;
+:Return profile summary;
+stop
+@enduml
+
+Activity Diagram: tải dữ liệu dashboard / history
+@startuml
+start
+:Open dashboard or history page;
+:GET /api/history/chart/{user_id};
+:GET /api/history/summary/{user_id};
+:GET /api/history/macros/{user_id};
+:GET /api/history/logs/{user_id};
+:Render charts and logs;
+stop
+@enduml
+
+Class / ER Diagram (User, UserProfile, MealLog)
+@startuml
+class User {
+  id: int
+  email: str
+  phone_number: str
+  password_hash: str
+  full_name: str
+  birth_year: int
+  gender: str
+  created_at: datetime
+}
+
+class UserProfile {
+  id: int
+  user_id: int
+  weight_kg: float
+  height_cm: float
+  current_bmi: float
+  daily_calorie_goal: float
+  goal_type: str
+  target_weight: float
+  goal_duration_months: int
+  start_date: datetime
+  updated_at: datetime
+}
+
+class MealLog {
+  id: int
+  user_id: int
+  food_name: str
+  calories: float
+  protein_g: float
+  carbs_g: float
+  fat_g: float
+  meal_type: str
+  scanned_at: datetime
+  image_url: str
+  notes: str
+}
+
+User "1" -- "1" UserProfile
+User "1" -- "*" MealLog
+@enduml
+
+Component / Architecture Diagram (Next.js, FastAPI, PostgreSQL...)
+@startuml
+component "Next.js Frontend" as FE
+component "FastAPI Backend" as BE
+database "PostgreSQL" as DB
+component "AI Model Loader" as AI
+node "Uploads Storage" as UP
+
+FE --> BE : HTTP API
+BE --> DB : SQLModel queries
+BE --> AI : load model / predict
+BE --> UP : save uploaded images
+@enduml
+
+Deployment Diagram (Server frontend, backend, database, storage)
+@startuml
+deployment "User Browser" as Browser
+node "Frontend Server" as FE
+node "Backend Server" as BE
+database "PostgreSQL Database" as DB
+node "Storage Server" as UP
+
+Browser --> FE : HTTP
+FE --> BE : API requests
+BE --> DB : SQL queries
+BE --> UP : upload/download images
+@enduml
+
+State Machine Diagram (Trạng thái MealLog và User session)
+@startuml
+state "MealLog" as ML {
+  [*] --> Draft
+  Draft --> Confirmed : user confirm
+  Confirmed --> Saved : save to DB
+}
+
+state "UserSession" as US {
+  [*] --> Unauthenticated
+  Unauthenticated --> Authenticated : login success
+  Authenticated --> Unauthenticated : logout or token expiry
+}
+@enduml
+
+Mermaid:Sequence Diagram: đăng ký
+sequenceDiagram
+  participant User
+  participant Frontend
+  participant Backend
+  User->>Frontend: Open register page
+  Frontend->>Backend: POST /api/v1/register
+  Backend->>Backend: Validate data, check unique email/phone
+  Backend->>Database: Save User
+  Backend->>Frontend: Return success
+
+Mermaid:Sequence Diagram: đăng nhập
+sequenceDiagram
+  participant User
+  participant Frontend
+  participant Backend
+  User->>Frontend: Open login page
+  Frontend->>Backend: POST /api/v1/login
+  Backend->>Database: Find user, verify password
+  Backend->>Frontend: Return access token
+  Frontend->>Browser: Store token
+
+Mermaid:Sequence Diagram: scan/analyze/confirm meal
+sequenceDiagram
+  participant User
+  participant Frontend
+  participant Backend
+  participant AIModel
+  User->>Frontend: Upload food image
+  Frontend->>Backend: POST /api/v1/scan
+  Backend->>Backend: Save image file
+  Backend->>Frontend: Return image_url
+  User->>Frontend: Confirm photo
+  Frontend->>Backend: POST /api/v1/vision/analyze
+  Backend->>AIModel: Predict food
+  AIModel-->>Backend: Return prediction
+  Backend-->>Frontend: Return food options
+  User->>Frontend: Confirm meal details
+  Frontend->>Backend: POST /api/v1/vision/confirm
+  Backend->>Database: Insert MealLog
+  Backend-->>Frontend: Return result
+
+Mermaid:Sequence Diagram: frontend fetch history/dashboard endpoints
+sequenceDiagram
+  participant Frontend
+  participant Backend
+  Frontend->>Backend: GET /api/history/chart/{user_id}
+  Backend-->>Frontend: chart data
+  Frontend->>Backend: GET /api/history/summary/{user_id}
+  Backend-->>Frontend: summary data
+  Frontend->>Backend: GET /api/history/macros/{user_id}
+  Backend-->>Frontend: macros data
+  Frontend->>Backend: GET /api/history/logs/{user_id}
+  Backend-->>Frontend: meal logs
+
+Mermaid:Sequence Diagram: chat AI flow
+sequenceDiagram
+  participant User
+  participant Frontend
+  participant Backend
+  participant AIService
+  User->>Frontend: Send message
+  Frontend->>Backend: POST /api/v1/chat
+  Backend->>Database: Load user info and today meals
+  Backend->>AIService: Generate reply
+  AIService-->>Backend: Return response
+  Backend-->>Frontend: Send reply
+
+Mermaid:Data Flow Diagram (DFD - Luồng dữ liệu giữa các thành phần)
+flowchart LR
+  User[User] -->|use app| Frontend[Next.js Frontend]
+  Frontend -->|API| Backend[FastAPI Backend]
+  Backend -->|read/write| DB[PostgreSQL]
+  Backend -->|load/predict| AI[AI Model]
+  Backend -->|store images| Storage[Uploads Storage]
+  Frontend -->|display| User

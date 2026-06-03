@@ -74,9 +74,9 @@ export default function Sidebar() {
 
             {/* FOOTER */}
             <div className="px-4">
-                <button className="w-full py-3 bg-[#1c6b42] text-white rounded-full font-bold hover:opacity-90 active:scale-95 transition">
+                {/* <button className="w-full py-3 bg-[#1c6b42] text-white rounded-full font-bold hover:opacity-90 active:scale-95 transition">
                     Nâng Cấp Premium
-                </button>
+                </button> */}
             </div>
 
         </nav>

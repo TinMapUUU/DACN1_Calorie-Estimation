@@ -25,7 +25,7 @@ export default function RegisterPage() {
             const res = await fetch('http://127.0.0.1:8000/api/v1/register', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                // SỬA Ở ĐÂY: Đã thêm phone_number vào giỏ hàng để gửi đi
+                // SỬA Ở ĐÂY: Đã thêm phone_number vào payload để gửi đi
                 body: JSON.stringify({
                     email: email,
                     password: password,
@@ -63,14 +63,14 @@ export default function RegisterPage() {
             <div className="hidden md:flex md:w-1/2 lg:w-[55%] relative overflow-hidden p-8 bg-[#f2f4f3]">
                 <img
                     src="https://lh3.googleusercontent.com/aida-public/AB6AXuBIRz_6Rd09oag0oY-UV3gDaWbYSAU1x8v8FIpDUE0XbWKoK52NKAIinXZLBs3nD38MHp3_xtJdxXApHi58x47F9vyAvxTGBbRNDIRukU3w-eDamPi_TWrfchF5SlGMvnPcufnDmQ3Dbj7vrn0yrpvtm6l5X6pFdfLlPydbneQ61jYHOJUjorA_7Z1eea7eq_Trx7Y9KPbqtl7HNM8af49AOxZ4vp5ZUP3eOVqPIKLvZk3ZxnZoUuNRfDC_PkCUtnGRYQfxRie31w"
-                    alt="Greenhouse"
+                    alt="Nhà kính"
                     className="absolute inset-0 w-full h-full object-cover rounded-r-3xl opacity-90"
                 />
 
                 <div className="relative z-10 flex flex-col justify-between h-full">
                     <div className="flex items-center gap-2">
                         <span className="text-green-700 text-3xl">🌱</span>
-                        <span className="font-bold text-xl">Vitality Core</span>
+                        <span className="font-bold text-xl">Cốt lõi Sức sống</span>
                     </div>
 
                     <div>
